@@ -75,13 +75,17 @@ def parse_text(html_page_string, parse_dict):
 
     return [match.get('data-doi') for match in matches]
 
-def main():
+def get_plos_one_dois(timestamp):
 
-    timestamp = datetime.now().strftime('%m-%d-%Y_%H-%M-%S')
-    log_filename = 'get_plos_lists_{}.log'.format(timestamp)
+    ''' Loop over entire range of PLOS ONE
+        index pages ('Biology and Life Sciences' section)
+
+        Parse HTML and write DOIs to file.
+        (PLOS ONE pages have a format different from 
+         other PLOS journals...)
+    '''
+
     plos_one_output_filename = 'plos_one_dois_{}.txt'.format(timestamp)
-
-    logging.basicConfig(filename=log_filename,level=logging.WARNING)
 
     with open(plos_one_output_filename, 'w') as f:
 
@@ -102,6 +106,15 @@ def main():
                 print('Getting page {} of {}...'.format(i, page_total))
 
     print('PLOS ONE DOIs saved to {}'.format(plos_one_output_filename))
+
+def main():
+
+    timestamp = datetime.now().strftime('%m-%d-%Y_%H-%M-%S')
+    log_filename = 'get_plos_lists_{}.log'.format(timestamp)
+    logging.basicConfig(filename=log_filename,level=logging.WARNING)
+
+    get_plos_one_dois(timestamp)
+
     print('Log file saved to {}'.format(log_filename))
 
 if __name__ == '__main__':
