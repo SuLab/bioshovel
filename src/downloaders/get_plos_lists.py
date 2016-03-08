@@ -19,7 +19,7 @@ def get_single_page(url):
     '''
 
     try:
-        r = requests.get(url, timeout=1)
+        r = requests.get(url, timeout=2)
         r.raise_for_status()
         return r.text
     except requests.exceptions.ConnectionError:
@@ -63,6 +63,9 @@ def parse_text(html_page_string, parse_dict):
 
         Return a list of DOIs (empty if none found.
     '''
+
+    if not html_page_string: # if empty string or False
+        return []
 
     soup = BeautifulSoup(html_page_string, 'html.parser')
 
