@@ -169,6 +169,7 @@ def get_plos_dois(timestamp, journal_abbrev):
     output_filename = '{}_dois_{}.txt'.format(journal_abbrev, timestamp)
     with open(output_filename, 'w') as f:
         for issue_url in issue_urls:
+            time.sleep(random.random())
             f.write('\n'.join(get_issue_dois(issue_url))+'\n')
 
     return output_filename
@@ -180,9 +181,14 @@ def main():
     logging.basicConfig(filename=log_filename,level=logging.WARNING)
 
     for plos_journal in ('plosbiology',
+                         'ploscompbiol',
+                         'plosgenetics',
+                         'plosmedicine',
+                         'plosntds',
                          'plospathogens'):
-        output_filename = get_plos_dois(timestamp, 'plosbiology')
-        print('{} DOIs saved to {}'.format(plos_journal, output_filename))
+        output_filename = get_plos_dois(timestamp, plos_journal)
+        if output_filename:
+            print('{} DOIs saved to {}'.format(plos_journal, output_filename))
 
     get_plos_one_dois(timestamp)
 
