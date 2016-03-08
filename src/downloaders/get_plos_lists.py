@@ -52,7 +52,7 @@ def get_html(url):
     logging.critical('URL get_html failed after 3 attempts: {}'.format(url))
     return False
 
-def parse_text(html_page_string, parse_dict):
+def parse_text_plos_one(html_page_string, parse_dict):
 
     ''' Parse HTML page with BeautifulSoup.
 
@@ -96,7 +96,7 @@ def get_plos_one_dois(timestamp):
             base_url = 'http://journals.plos.org/plosone/browse/biology_and_life_sciences?resultView=list&page={}'
             html_string = get_html(base_url.format(i))
 
-            dois = parse_text(html_string, {'data-metricsurl': '/plosone/article/metrics'})
+            dois = parse_text_plos_one(html_string, {'data-metricsurl': '/plosone/article/metrics'})
             f.write('\n'.join(dois)+'\n')
 
             # wait a few ms before continuing...
@@ -107,14 +107,86 @@ def get_plos_one_dois(timestamp):
 
     print('PLOS ONE DOIs saved to {}'.format(plos_one_output_filename))
 
+def get_issue_urls(journal_archive_url):
+
+    ''' Accesses and parses journal_archive_url
+        and returns a list of URLs for each issue
+        (for all PLOS journals except PLOS ONE)
+    '''
+
+    html_string = get_html(journal_archive_url)
+    if not html_string: # if empty string or False
+        return []
+
+    soup = BeautifulSoup(html_string, 'html.parser')
+
+    journal_slides_ul = soup.find('ul', {'id': 'journal_slides'})
+    if not journal_slides_ul:
+        logging.critical('failed to parse issue URL: {}'.format(journal_archive_url))
+        return
+
+    all_links = journal_slides_ul.find_all('a')
+
+    base_url = 'http://journals.plos.org'
+    return [base_url+a_tag['href'] for a_tag in all_links]
+
+def get_issue_dois(issue_url):
+
+    ''' Given an issue_url, return a list of all DOIs
+        from that journal issue
+        (for all PLOS journals except PLOS ONE)
+    '''
+
+    html_string = get_html(issue_url)
+    if not html_string: # if empty string or False
+        return []
+
+    soup = BeautifulSoup(html_string, 'html.parser')
+    matches = soup.find_all('p', {'class': 'article-info'})
+
+    return [match.text.split('|')[1].strip() for match in matches]
+
+def get_plos_dois(timestamp, journal_abbrev):
+
+    ''' For use with all PLOS journals except PLOS ONE.
+
+        Loops over range of journal issues from Volume 1 
+        to Volume num_volumes, starting with issue 
+        start_month (first issue month of first volume)
+        and ending with issue end_month (latest issue month
+        of latest volume)
+
+        Parses HTML and writes DOIs to file based on journal_abbrev.
+        (journal_abbrev appears in the URL for each journal page)
+    '''
+
+    journal_archive_url = 'http://journals.plos.org/{}/volume'.format(journal_abbrev)
+    issue_urls = get_issue_urls(journal_archive_url)
+
+    if not issue_urls:
+        return
+
+    output_filename = '{}_dois_{}.txt'.format(journal_abbrev, timestamp)
+    with open(output_filename, 'w') as f:
+        for issue_url in issue_urls:
+            f.write('\n'.join(get_issue_dois(issue_url))+'\n')
+
+    return output_filename
+
 def main():
 
     timestamp = datetime.now().strftime('%m-%d-%Y_%H-%M-%S')
     log_filename = 'get_plos_lists_{}.log'.format(timestamp)
     logging.basicConfig(filename=log_filename,level=logging.WARNING)
 
+    for plos_journal in ('plosbiology',
+                         'plospathogens'):
+        output_filename = get_plos_dois(timestamp, 'plosbiology')
+        print('{} DOIs saved to {}'.format(plos_journal, output_filename))
+
     get_plos_one_dois(timestamp)
 
+    print()
     print('Log file saved to {}'.format(log_filename))
 
 if __name__ == '__main__':
