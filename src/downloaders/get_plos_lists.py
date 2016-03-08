@@ -49,7 +49,7 @@ def get_html(url):
         requests_remaining -= 1
         time.sleep(random.random())
 
-    logging.error('URL get_html failed: {}'.format(url))
+    logging.critical('URL get_html failed after 3 attempts: {}'.format(url))
     return False
 
 def parse_text(html_page_string, parse_dict):
