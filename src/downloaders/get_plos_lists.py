@@ -19,7 +19,7 @@ def get_single_page(url):
     '''
 
     try:
-        r = requests.get(url, timeout=2)
+        r = requests.get(url, timeout=5)
         r.raise_for_status()
         return r.text
     except requests.exceptions.ConnectionError:
