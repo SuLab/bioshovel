@@ -44,45 +44,14 @@ def get_api_key():
 
     return api_key
 
-def scrape_issn(journal_title):
-    url = "http://api.elsevier.com/content/serial/title"
-
-    api_key = get_api_key()
-
-    params = {
-        "apiKey": api_key,
-        "title": journal_title,
-        "httpAccept": "application/xml",
-        "content": "journal"
-#        "oa": "full"
-    }
-
-    error, html = fetch_page(url, params)
-    if error is not None:
-        print("Could not query {} due to {}".format("{} {}".format(url, params), error))
-    else:
-        soup = BeautifulSoup(html, "lxml")
-
-        for entry in soup.find_all("entry"):
-            titles = entry.find_all("dc:title")
-            assert len(titles) == 1
-            title = titles[0].text
-
-            if title == journal_title:
-                issns = entry.find_all("prism:issn")
-                assert len(issns) == 1, "{}".format(journal_title)
-                return issns[0].text
-
-    # failed to find the issn of this journal title
-    return None
-
-def cache_all_publications():
+@load_if_exist("temp.txt")
+def cache_all_journals():
     url = "http://api.elsevier.com/sitemap/page/sitemap/{}.html"
 
     pubs = defaultdict(list)
     for letter in tqdm(string.ascii_lowercase):
         error, html = fetch_page(url.format(letter))
-        assert error is None, "{}".format(letter)
+        assert error is None, "Sitemap for {} is broken".format(letter)
 
         soup = BeautifulSoup(html, "lxml")
 
@@ -115,32 +84,8 @@ def get_issn(journal_title):
     return None
 
 def main():
-    titles = scrape_journal_titles()
-    print(len(titles))
-    return
-
-
-
-
-    journal_titles = get_journal_titles()
-
-    info = cache_all_publications()
-    with open("pubs.txt", "w") as fout:
-        for name, issns in info.items():
-#            assert len(issns) == 1
-            fout.write("{}\t{}\n".format(name, issns))
-
-    return
-
-    print("scraping issns")
-
-    issns = []
-
-    with open("out.txt", "w") as fout:
-        for title in tqdm(journal_titles):
-            issn = get_issn(title)
-            issns.append(issn)
-            fout.write("{}\t{}\n".format(title, issn))
+    info = cache_all_journals()
+    print(len(info))
 
 
 if __name__ == "__main__":
