@@ -64,25 +64,6 @@ def cache_all_journals():
 
     return pubs
 
-def get_issn(journal_title):
-    first_char = journal_title[0].lower()
-
-    url = "http://api.elsevier.com/sitemap/page/sitemap/{}.html".format(first_char)
-
-    error, html = fetch_page(url)
-    if error is not None:
-        print("Could not query {} due to {}".format(url, error))
-    else:
-        soup = BeautifulSoup(html, "lxml")
-        links = soup.find_all("a", href = True, text = journal_title)
-        assert len(links) == 1, "{}".format(journal_title)
-
-        link = links[0]["href"]
-        issn = link[link.rfind("/") + 1 : link.rfind(".")]
-        return issn
-
-    return None
-
 def main():
     info = cache_all_journals()
     print(len(info))
