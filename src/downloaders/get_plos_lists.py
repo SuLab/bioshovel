@@ -9,6 +9,7 @@ from datetime import datetime
 import logging
 import random
 import requests
+import re
 import sys
 import time
 
@@ -19,7 +20,7 @@ def get_single_page(url):
     '''
 
     try:
-        r = requests.get(url, timeout=5)
+        r = requests.get(url, timeout=10)
         r.raise_for_status()
         return r.text
     except requests.exceptions.ConnectionError:
@@ -146,7 +147,7 @@ def get_issue_dois(issue_url):
 
     return [match.text.split('|')[1].strip() for match in matches]
 
-def get_plos_dois(timestamp, journal_abbrev):
+def get_plos_dois(timestamp, journal_abbrev, issue_url=None):
 
     ''' For use with all PLOS journals except PLOS ONE.
 
@@ -161,7 +162,9 @@ def get_plos_dois(timestamp, journal_abbrev):
     '''
 
     journal_archive_url = 'http://journals.plos.org/{}/volume'.format(journal_abbrev)
-    issue_urls = get_issue_urls(journal_archive_url)
+
+    if not issue_urls:
+        issue_urls = get_issue_urls(journal_archive_url)
 
     if not issue_urls:
         return
@@ -174,7 +177,49 @@ def get_plos_dois(timestamp, journal_abbrev):
 
     return output_filename
 
+def get_failed_urls(log_filename):
+
+    ''' Return a list of failed downloads from 
+        log_filename
+    '''
+
+    failed_urls = []
+    with open(log_filename) as f:
+        for line in f:
+            regex_match = re.match(r'(^CRITICAL.*URL get_html failed after [0-9]+ attempts:\s)(.*)(\n)', line)
+            if regex_match:
+                failed_urls.append(regex_match.group(2))
+    return failed_urls
+
 def main():
+
+    # if retrying failed downloads...
+    # (if script was run with logfile as argument)
+    if len(sys.argv) == 2:
+        log_filename = sys.argv[1]
+        filename_regex = re.compile(r'(^get_plos_lists_)(.*)(\.log$)')
+        regex_match = re.match(filename_regex, log_filename)
+        assert regex_match, 'input file {} not a log file'.format(log_filename)
+        timestamp = regex_match.group(2)
+        failed_urls = get_failed_urls(log_filename)
+
+        # only handling failed 'issue' links for now...
+        issue_urls = [url for url in failed_urls if 'issue' in url]
+        issue_dois = [get_issue_dois(issue_url) for issue_url in issue_urls]
+        journal_abbrev_regex = re.compile(r'(^http://journals.plos.org/)(.+)(/.+)')
+        journal_abbrev_matches = [re.match(journal_abbrev_regex, issue_url).group(2)
+                                  for issue_url in issue_urls]
+        assert len(journal_abbrev_matches) == len(issue_dois), 'length mismatch'
+        for journal_abbrev, issue_doi_list in zip(journal_abbrev_matches, issue_dois):
+            # append to each existing output file...
+            output_filename = '{}_dois_{}.txt'.format(journal_abbrev, timestamp)
+            if issue_doi_list:
+                with open(output_filename, 'a') as f:
+                    f.write('\n'.join(issue_doi_list)+'\n')
+
+        return
+
+    assert len(sys.argv) == 1, 'too many arguments'
 
     timestamp = datetime.now().strftime('%m-%d-%Y_%H-%M-%S')
     log_filename = 'get_plos_lists_{}.log'.format(timestamp)
