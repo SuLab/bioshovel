@@ -6,6 +6,15 @@ import pytz
 
 from datetime import datetime
 
+def cache(file_loc, data):
+    """Save the data object to disk as a JSON file."""
+    cur_time = datetime.now(pytz.utc)
+    timestamp = cur_time.strftime("%Y-%m-%d %H:%M %Z")
+
+    result = {"timestamp": timestamp, "data": data}
+    with open(file_loc, "w") as fout:
+        json.dump(result, fout, indent = 4)
+
 def load_if_exist(file_loc):
     """Load the function's output if it has already been cached to file.
 
@@ -25,14 +34,7 @@ def load_if_exist(file_loc):
                 return data["data"]
 
             data = function(*args, **kwargs)
-
-            cur_time = datetime.now(pytz.utc)
-            timestamp = cur_time.strftime("%Y-%m-%d %H:%M %Z")
-
-            result = {"timestamp": timestamp, "data": data}
-            with open(file_loc, "w") as fout:
-                json.dump(result, fout, indent = 4)
-
+            cache(file_loc, data)
             return data
 
         return wrapper
