@@ -86,7 +86,7 @@ def get_plos_one_dois(timestamp):
          other PLOS journals...)
     '''
 
-    plos_one_output_filename = 'plos_one_dois_{}.txt'.format(timestamp)
+    plos_one_output_filename = 'plosone_dois_{}.txt'.format(timestamp)
 
     with open(plos_one_output_filename, 'w') as f:
 
