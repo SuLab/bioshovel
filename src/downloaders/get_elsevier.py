@@ -44,11 +44,16 @@ def get_api_key():
 
     return api_key
 
-@load_if_exist("temp.txt")
-def cache_all_journals():
+@load_if_exist("../../data/elsevier/all_journal_issns.txt")
+def scrape_all_journal_issns():
+    """Use the Elsevier sitemap of all publications (books, journals) to
+    determine the ISSNs of all journals.
+    """
     url = "http://api.elsevier.com/sitemap/page/sitemap/{}.html"
 
-    pubs = defaultdict(list)
+    # A small number of journals have two ISSNs, but most have unique ISSNs
+
+    issn = defaultdict(list)
     for letter in tqdm(string.ascii_lowercase):
         error, html = fetch_page(url.format(letter))
         assert error is None, "Sitemap for {} is broken".format(letter)
@@ -58,16 +63,21 @@ def cache_all_journals():
         for href in soup.find_all("a", href = re.compile(r'journals')):
             name = href.text
             link = href["href"]
-            issn = link[link.rfind("/") + 1 : link.rfind(".")]
 
-            pubs[name].append(issn)
+            # the ISSN with the middle dash removed
+            val = link[link.rfind("/") + 1 : link.rfind(".")]
+            assert len(val) == 8, "{} has a bas ISSN".format(name)
 
-    return pubs
+            issn[name].append("{}-{}".format(val[:4], val[4:]))
+
+    return issn
 
 def main():
-    info = cache_all_journals()
-    print(len(info))
+    journal_titles = scrape_journal_titles()
+    issns = scrape_all_journal_issns()
 
+    # one open access journal eNeurologicalSci does not exist in the elsevier site map
+    # so we can just ignore this journal
 
 if __name__ == "__main__":
     main()
