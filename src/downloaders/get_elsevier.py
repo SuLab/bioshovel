@@ -1,6 +1,30 @@
-# Tong Shu Li
-"""
-Download Elsevier articles.
+#!/usr/bin/env python3
+"""Download all open access articles in English journals catalogued by Elsevier.
+
+Steps:
+1. Query ScienceDirect for all Open Access journals in the biological sciences.
+
+    ScienceDirect categorizes its journals by subject area, while Elsevier's API
+    does not. However this returns journals of all languages, while we only want
+    English publications.
+
+    We will use the NLM Catalog to determine the language of each journal, and
+    query NLM via the journal's ISSN for better accuracy.
+
+2. Determine journal ISSN using Elsevier's sitemap.
+
+    ScienceDirect and Elsevier's API do not agree on which journals are open
+    access. To determine the ISSN of each journal, we instead use the Elsevier
+    sitemap, since the URL of each journal is its ISSN.
+
+3. Query NLM Catalog to determine language of each journal via ISSN.
+
+    A journal may have multiple publication languages.
+
+4. Determine articles in each English journal.
+
+    Identify the articles published in each English journal via the Elsevier
+    sitemap.
 """
 import json
 import logging
@@ -16,6 +40,7 @@ from tqdm import tqdm
 from fetch_page import fetch_page
 from util import cache
 from util import load_if_exist
+
 
 @load_if_exist("../../data/elsevier/bio_journal_titles.txt")
 def scrape_journal_titles():
@@ -42,12 +67,14 @@ def scrape_journal_titles():
 
     return journal_titles
 
+
 def get_api_key():
     floc = os.path.join("..", "..", "data", "elsevier", "apikey.txt")
     with open(floc, "r") as fin:
         api_key = fin.read().rstrip("\n")
 
     return api_key
+
 
 @load_if_exist("../../data/elsevier/all_journal_issns.txt")
 def scrape_all_journal_issns():
