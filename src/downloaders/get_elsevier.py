@@ -81,6 +81,7 @@ def scrape_all_journal_issns():
     """Use the Elsevier sitemap of all publications (books, journals) to
     determine the ISSNs of all journals.
     """
+    logger = logging.getLogger(__name__)
     url = "http://api.elsevier.com/sitemap/page/sitemap/{}.html"
 
     # A small number of journals have two ISSNs, but most have unique ISSNs
@@ -88,24 +89,26 @@ def scrape_all_journal_issns():
     issn = defaultdict(list)
     for letter in tqdm(string.ascii_lowercase):
         error, html = fetch_page(url.format(letter))
-        assert error is None, "Sitemap for {} is broken".format(letter)
 
-        soup = BeautifulSoup(html, "lxml")
+        if error is not None:
+            logger.warn("Sitemap for {} is broken".format(letter))
+        else:
+            soup = BeautifulSoup(html, "lxml")
+            for href in soup.find_all("a", href = re.compile(r'journals')):
+                name = href.text
+                link = href["href"]
 
-        for href in soup.find_all("a", href = re.compile(r'journals')):
-            name = href.text
-            link = href["href"]
+                # the ISSN with the middle dash removed
+                val = link[link.rfind("/") + 1 : link.rfind(".")]
+                assert len(val) == 8, "{} has a bas ISSN".format(name)
 
-            # the ISSN with the middle dash removed
-            val = link[link.rfind("/") + 1 : link.rfind(".")]
-            assert len(val) == 8, "{} has a bas ISSN".format(name)
-
-            issn[name].append("{}-{}".format(val[:4], val[4:]))
+                issn[name].append("{}-{}".format(val[:4], val[4:]))
 
     return issn
 
+
 def get_language(journal_issn):
-    """Use the NLM Catalog to lookup the publication language of each journal."""
+    """Lookup the publication language of each journal using the NLM catalog."""
 
     logger = logging.getLogger(__name__)
     def get_nlm_uid(issn):
@@ -117,7 +120,9 @@ def get_language(journal_issn):
         }
 
         error, json = fetch_page(url, params, rettype = "json")
-        assert error is None, "No NLM entry for {}".format(issn)
+        if error is not None:
+            logger.warn("Error querying NLM Catalog with {}".format(issn))
+            return None
 
         if int(json["esearchresult"]["count"]) == 1:
             return json["esearchresult"]["idlist"][0]
@@ -153,7 +158,8 @@ def get_language(journal_issn):
 @load_if_exist("../../data/elsevier/open_journal_languages.txt")
 def get_languages(journal_titles, issns):
     return {journal: get_language(issns[journal][0])
-        for journal in tqdm(journal_titles) if journal in issns
+        for journal in tqdm(journal_titles)
+            if journal in issns and len(issns[journal]) == 1
     }
 
 
@@ -181,8 +187,8 @@ def scrape_piis_in_journal(url):
 
     links = get_next_level(url)
     if not links:
-        logging.warning("No links for the journal {}".format(url))
-        return set()
+        logging.warning("No articles for the journal {}".format(url))
+        return []
 
     while not has_pii(links):
         temp = []
@@ -191,14 +197,13 @@ def scrape_piis_in_journal(url):
 
         links = temp
 
-    # check that links are unique..
-    assert len(set(links)) == len(links), "PIIs for {} are not unique!".format(url)
     return links
 
 
 @load_if_exist("../../data/elsevier/eng_open_bio_journal_piis.txt")
 def scrape_all_piis(issns, languages):
     """Scrape the PIIs of all English articles in open access Elsevier journals."""
+    url = "http://api.elsevier.com/sitemap/page/sitemap/serial/journals/{}/{}.html"
 
     piis = dict()
     for journal, langs in languages.items():
@@ -206,10 +211,9 @@ def scrape_all_piis(issns, languages):
             issn = issns[journal]
             assert len(issn) == 1
 
-            url = "http://api.elsevier.com/sitemap/page/sitemap/serial/journals/{}/{}.html"
-            url = url.format(journal[0].lower(), issn[0].replace("-", ""))
+            link = url.format(journal[0].lower(), issn[0].replace("-", ""))
 
-            piis[journal] = scrape_piis_in_journal(url)
+            piis[journal] = scrape_piis_in_journal(link)
 
     return piis
 
