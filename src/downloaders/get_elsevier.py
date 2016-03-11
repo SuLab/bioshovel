@@ -10,6 +10,7 @@ import string
 
 from bs4 import BeautifulSoup
 from collections import defaultdict
+from itertools import islice
 from tqdm import tqdm
 
 from fetch_page import fetch_page
@@ -121,24 +122,86 @@ def get_language(journal_issn):
 
     raise Exception("NLM Catalog missing language field for {}".format(journal_issn))
 
+
 @load_if_exist("../../data/elsevier/open_journal_languages.txt")
 def get_languages(journal_titles, issns):
     return {journal: get_language(issns[journal][0])
         for journal in tqdm(journal_titles) if journal in issns
     }
 
+
+def scrape_piis_in_journal(url):
+    """Given the URL of a specific journal, return all the Elsevier PIIs for
+    articles in that journal.
+    """
+    logger = logging.getLogger(__name__)
+
+    def get_next_level(cur_url):
+        """Skip the first link because it's self-referential."""
+        error, html = fetch_page(cur_url)
+
+        if error is not None:
+            logger.warning("Could not access {}".format(cur_url))
+            return []
+
+        soup = BeautifulSoup(html, "lxml")
+        return [link["href"] for link in islice(soup.find_all("a"), 1, None)]
+
+    def has_pii(links):
+        """Are these links to actual articles?"""
+        return any("article/pii" in link for link in links)
+
+
+    links = get_next_level(url)
+    if not links:
+        logging.warning("No links for the journal {}".format(url))
+        return set()
+
+    while not has_pii(links):
+        temp = []
+        for link in tqdm(links):
+            temp += get_next_level(link)
+
+        links = temp
+
+    # check that links are unique..
+    assert len(set(links)) == len(links), "PIIs for {} are not unique!".format(url)
+    return links
+
+
+@load_if_exist("../../data/elsevier/eng_open_bio_journal_piis.txt")
+def scrape_all_piis(issns, languages):
+    """Scrape the PIIs of all English articles in open access Elsevier journals."""
+
+    piis = dict()
+    for journal, langs in languages.items():
+        if langs == ["English"]:
+            issn = issns[journal]
+            assert len(issn) == 1
+
+            url = "http://api.elsevier.com/sitemap/page/sitemap/serial/journals/{}/{}.html"
+            url = url.format(journal[0].lower(), issn[0].replace("-", ""))
+
+            piis[journal] = scrape_piis_in_journal(url)
+
+    return piis
+
+
 def main():
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     logger.addHandler(logging.FileHandler("../../logs/elsevier_scraper.log"))
+
 
     journal_titles = scrape_journal_titles()
     issns = scrape_all_journal_issns()
 
     lang = get_languages(journal_titles, issns)
 
-    # one open access journal eNeurologicalSci does not exist in the elsevier site map
-    # so we can just ignore this journal
+    piis = scrape_all_piis(issns, lang)
+    print("done")
+
+
 
 if __name__ == "__main__":
     main()
