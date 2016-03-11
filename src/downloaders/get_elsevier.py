@@ -219,9 +219,11 @@ def scrape_all_piis(issns, languages):
 
 
 def main():
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    logger.addHandler(logging.FileHandler("../../logs/elsevier_scraper.log"))
+    log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    logging.basicConfig(
+        filename = "../../logs/elsevier_scraper.log",
+        level = logging.INFO, format = log_format
+    )
 
 
     journal_titles = scrape_journal_titles()
@@ -231,7 +233,6 @@ def main():
 
     piis = scrape_all_piis(issns, lang)
     print("done")
-
 
 
 if __name__ == "__main__":
