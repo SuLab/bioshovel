@@ -11,9 +11,9 @@ def cache(file_loc, data):
     cur_time = datetime.now(pytz.utc)
     timestamp = cur_time.strftime("%Y-%m-%d %H:%M %Z")
 
-    result = {"timestamp": timestamp, "data": data}
+    result = {"_timestamp": timestamp, "data": data}
     with open(file_loc, "w") as fout:
-        json.dump(result, fout, indent = 4)
+        json.dump(result, fout, sort_keys = True, indent = 4)
 
 def load_if_exist(file_loc):
     """Load the function's output if it has already been cached to file.
@@ -29,9 +29,7 @@ def load_if_exist(file_loc):
         def wrapper(*args, **kwargs):
             if os.path.isfile(file_loc):
                 with open(file_loc, "r") as fin:
-                    data = json.load(fin)
-
-                return data["data"]
+                    return json.load(fin)["data"]
 
             data = function(*args, **kwargs)
             cache(file_loc, data)
