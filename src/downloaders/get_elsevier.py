@@ -41,8 +41,10 @@ from fetch_page import fetch_page
 from util import cache
 from util import load_if_exist
 
+from web_util import fetch_and_map
 
-@load_if_exist("../../data/elsevier/bio_journal_titles.txt")
+
+#@load_if_exist("../../data/elsevier/bio_journal_titles.txt")
 def scrape_journal_titles():
     """Get the journal titles of only open access journals in the life or health
     sciences from ScienceDirect.
@@ -50,22 +52,20 @@ def scrape_journal_titles():
     Since the web interface has an annoying scrolling refresh, grab the journal
     titles grouped by starting letter.
     """
-    logger = logging.getLogger(__name__)
-    BASE = "http://www.sciencedirect.com/science/journals/"
+    def get_titles(html):
+        soup = BeautifulSoup(html, "lxml")
+        tags = soup.find_all("li", {"class": "browseimpBrowseRow"})
+        return [tag.get("data-title") for tag in tags]
 
-    journal_titles = []
-    for first_letter in tqdm(string.ascii_lowercase):
-        query = "sub/5/18/17/220/22/21/466/23/487/{}/open-access".format(first_letter)
-        error, html = fetch_page(BASE + query)
+    url = ("http://www.sciencedirect.com/science/journals/"
+        "sub/5/18/17/220/22/21/466/23/487/{}/open-access")
 
-        if error is not None:
-            logger.warn("Could not query {} due to: {}".format(BASE + query, error))
-        else:
-            soup = BeautifulSoup(html, "lxml")
-            tags = soup.find_all("li", {"class": "browseimpBrowseRow"})
-            journal_titles += [tag.get("data-title") for tag in tags]
+    data = {
+        letter: url.format(letter)
+        for letter in string.ascii_lowercase
+    }
 
-    return journal_titles
+    return fetch_and_map(get_titles, data, MAX_CONNECTIONS = 10, MAX_TIMEOUT = 10)
 
 
 def get_api_key():
@@ -227,6 +227,10 @@ def main():
 
 
     journal_titles = scrape_journal_titles()
+    cache("ttt.txt", journal_titles)
+    print("done")
+    return
+
     issns = scrape_all_journal_issns()
 
     lang = get_languages(journal_titles, issns)
