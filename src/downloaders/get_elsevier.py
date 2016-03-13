@@ -26,9 +26,7 @@ Steps:
     Identify the articles published in each English journal via the Elsevier
     sitemap.
 """
-import json
 import logging
-import os
 import re
 import string
 
@@ -36,12 +34,8 @@ from bs4 import BeautifulSoup
 from collections import defaultdict
 from itertools import chain
 from itertools import islice
-from tqdm import tqdm
 
-from fetch_page import fetch_page
-from util import cache
 from util import load_if_exist
-
 from web_util import fetch_and_map
 
 
@@ -135,7 +129,6 @@ def get_open_eng_bio_journals():
 
         raise Exception("NLM Catalog missing language field for {}".format(key))
 
-
     journals = get_journals()
 
 #-------------------------------------------------------------------------------
@@ -162,64 +155,47 @@ def get_open_eng_bio_journals():
 
     langs = fetch_and_map(get_language, data, MAX_CONNECTIONS = 8)
 
-    # filter and return only those which are english
-    return sorted(title for title, lang in langs.items() if lang == ["English"])
+    return {
+        title: journals[title]
+        for title, lang in langs.items() if lang == ["English"]
+    }
 
 
-def scrape_piis_in_journal(url):
-    """Given the URL of a specific journal, return all the Elsevier PIIs for
-    articles in that journal.
-    """
-    logger = logging.getLogger(__name__)
+@load_if_exist("../../data/elsevier/open_english_bio_articles.txt")
+def find_articles(journals):
+    """Find the article links of the given list of journals."""
 
-    def get_next_level(cur_url):
+    def are_piis(links):
+        """Are these links to actual articles?"""
+        return all("article/pii" in link for link in links)
+
+    # find the volumes/issues in each journal
+    def get_links(key, html):
         """Skip the first link because it's self-referential."""
-        error, html = fetch_page(cur_url)
-
-        if error is not None:
-            logger.warning("Could not access {}".format(cur_url))
-            return []
-
         soup = BeautifulSoup(html, "lxml")
         return [link["href"] for link in islice(soup.find_all("a"), 1, None)]
 
-    def has_pii(links):
-        """Are these links to actual articles?"""
-        return any("article/pii" in link for link in links)
-
-
-    links = get_next_level(url)
-    if not links:
-        logging.warning("No articles for the journal {}".format(url))
-        return []
-
-    while not has_pii(links):
-        temp = []
-        for link in tqdm(links):
-            temp += get_next_level(link)
-
-        links = temp
-
-    return links
-
-
-@load_if_exist("../../data/elsevier/eng_open_bio_journal_piis.txt")
-def scrape_all_piis(issns, languages):
-    """Scrape the PIIs of all English articles in open access Elsevier journals."""
     url = "http://api.elsevier.com/sitemap/page/sitemap/serial/journals/{}/{}.html"
+    data = {
+        title: (url.format(title[0].lower(), issn.replace("-", "")), None)
+        for title, issn in journals.items()
+    }
 
-    piis = dict()
-    for journal, langs in languages.items():
-        if langs == ["English"]:
-            issn = issns[journal]
-            assert len(issn) == 1
+    issues = fetch_and_map(get_links, data, MAX_CONNECTIONS = 8)
 
-            link = url.format(journal[0].lower(), issn[0].replace("-", ""))
+#-------------------------------------------------------------------------------
 
-            piis[journal] = scrape_piis_in_journal(link)
+    articles = {}
+    for journal, links in issues.items():
+        data = {link: (link, None) for link in links}
 
-    return piis
+        res = fetch_and_map(get_links, data, MAX_CONNECTIONS = 8)
 
+        temp = sorted(chain.from_iterable(res.values()))
+        assert are_piis(temp), "{}'s articles are >2 links deep".format(journal)
+        articles[journal] = temp
+
+    return articles
 
 
 def main():
@@ -230,8 +206,9 @@ def main():
     )
 
     eng_journals = get_open_eng_bio_journals()
+    articles = find_articles(eng_journals)
 
-    print("done")
+    print("Elsevier scraper completed successfully with no errors.")
 
 
 if __name__ == "__main__":
