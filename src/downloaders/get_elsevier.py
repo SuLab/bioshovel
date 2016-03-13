@@ -25,12 +25,16 @@ Steps:
 
     Identify the articles published in each English journal via the Elsevier
     sitemap.
+
+5. Download the articles using Elsevier's API.
 """
 import logging
+import os
 import re
 import string
 
 from bs4 import BeautifulSoup
+from collections import Counter
 from collections import defaultdict
 from itertools import chain
 from itertools import islice
@@ -198,6 +202,74 @@ def find_articles(journals):
     return articles
 
 
+def get_elsevier_apikey():
+    floc = os.path.abspath("../../data/elsevier/apikey.txt")
+    with open(floc, "r") as fin:
+        return fin.read().rstrip("\n")
+
+
+def download_articles(article_urls, data_type):
+    """Download the actual articles from Elsevier and save to disk.
+
+    In order to provide accurate statistics about how many articles were
+    successfully downloaded, the list of article URLs should be unique!
+
+    :param: article_urls = List of strings
+    :param: data_type in ["xml", "txt"]
+    """
+    # Elsevier only gives two possibilities, a plain UTF-8 string or XML
+    assert data_type in ["xml", "txt"], "Incorrect Elsevier download format!"
+    assert len(set(article_urls)) == len(article_urls), "URLs are not unique!"
+
+    def get_PII(article_link):
+        """Extract the PII of an article from its link."""
+        return article_link[article_link.rfind("/") + 1 : ]
+
+    def get_fname(article_url):
+        """Get the filename of the place where we will store the article."""
+        return os.path.abspath(
+            os.path.join("../../data/elsevier/articles/{}".format(data_type),
+            "{}.{}".format(get_PII(article_url), data_type))
+        )
+
+    def get_saver(data_type):
+        def save_article(key, html):
+            try:
+                with open(key, "w") as fout:
+                    if data_type == "txt":
+                        fout.write("{}\n".format(html))
+                    else:
+                        fout.write("{}\n".format(BeautifulSoup(html, "lxml").prettify()))
+
+                return True
+            except Exception as exc:
+                logger = logging.getLogger("__name__")
+                logger.warn("Fetched {} but failed to save to disk: {}".format(key, str(exc)))
+                return False
+
+        return save_article
+
+    params = {
+        "httpAccept": "text/{}".format("xml" if data_type == "xml" else "plain"),
+        "APIKey": get_elsevier_apikey()
+    }
+
+    data = {
+        get_fname(url): (url, params)
+        for url in article_urls
+    }
+
+    # seems like the max speed of retrieving files is 2 articles / second
+    res = fetch_and_map(get_saver(data_type), data, MAX_CONNECTIONS = 8)
+
+    logger = logging.getLogger(__name__)
+    logger.info("Successfully downloaded {} of {} articles".format(
+        Counter(res.values())[True], len(article_urls))
+    )
+
+    return res
+
+
 def main():
     log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     logging.basicConfig(
@@ -205,10 +277,23 @@ def main():
         level = logging.INFO, format = log_format
     )
 
-    eng_journals = get_open_eng_bio_journals()
-    articles = find_articles(eng_journals)
+    logger = logging.getLogger("__name__")
+    logger.info("Starting Elsevier Open Access Biological corpus scraper")
 
-    print("Elsevier scraper completed successfully with no errors.")
+
+    eng_journals = get_open_eng_bio_journals()
+    logger.info("Finished filtering journals to English ones only")
+
+    articles = find_articles(eng_journals)
+    logger.info("Finished finding article links")
+
+    docset = list(chain.from_iterable(articles.values()))
+
+    data_type = "xml"
+    logger.info("Beginning to retrieve {} documents (type: {})".format(len(docset), data_type))
+    download_articles(docset, data_type)
+
+    logger.info("Elsevier scraper completed successfully with no errors")
 
 
 if __name__ == "__main__":
