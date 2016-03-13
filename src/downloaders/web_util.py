@@ -27,8 +27,8 @@ def fetch_page(key, semaphore, url, params = None, rettype = "text",
 
                 except Exception as exc:
                     logger = logging.getLogger(__name__)
-                    logger.warn("Failed to fetch {}({}, {}) on try #{}/{}: {}".format(
-                        url, args, kwargs, i+1, MAX_RETRIES, str(exc)
+                    logger.warn("Failed to fetch {}:{}({}) on try #{}/{}: {}".format(
+                        key, url, params, i+1, MAX_RETRIES, str(exc)
                     ))
 
                     yield from asyncio.sleep(RETRY_WAIT_TIME)
@@ -43,15 +43,15 @@ def fetch_and_map(function, data, MAX_CONNECTIONS = 4, *args, **kwargs):
     Results are returned as a dictionary. Args and kwargs are passed to the
     fetch_page() function to set the HTML request parameters.
 
-    Input: F = function(), data = {key: url}
+    Input: F = function(), data = {key: (url, params)}
     Returns: {key: F(fetch_url(url))}
     """
 
     @asyncio.coroutine
     def process(semaphore):
         tasks = [
-            fetch_page(key, semaphore, url, *args, **kwargs)
-            for key, url in data.items()
+            fetch_page(key, semaphore, url, params = params, *args, **kwargs)
+            for key, (url, params) in data.items()
         ]
 
         res = {}
@@ -59,7 +59,7 @@ def fetch_and_map(function, data, MAX_CONNECTIONS = 4, *args, **kwargs):
             key, val = yield from coroutine
 
             if val is not None:
-                res[key] = function(val)
+                res[key] = function(key, val)
             else:
                 logger = logging.getLogger(__name__)
                 logging.warn("Could not process {}:{}".format(key, data[key]))
