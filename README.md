@@ -4,3 +4,5 @@
 
 **Toby Li** and **Sandip Chatterjee** of the [Su Lab](http://sulab.org)
 
+[![Build Status](https://travis-ci.org/SuLab/bioshovel.svg?branch=master)](https://travis-ci.org/SuLab/bioshovel)
+
