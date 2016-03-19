@@ -5,7 +5,7 @@
 # requires Perl to be available in $PATH
 
 # usage:
-# python3 chem_ner.py [path_to_paragraph_documents] [output_directory] --tmchem [path/to/tmChem.pl]
+# python3 chem_ner.py [path_to_paragraph_documents] [output_directory] --tmchem [path/to/tmChem.pl] --logdir [path/to/save/logfile]
 
 # runs:
 # perl tmChem.pl -i inputdir -o outputdir -m Model/All.Model
@@ -23,16 +23,9 @@ from itertools import repeat
 import multiprocessing as mp
 from tqdm import tqdm
 
-def save_file(file_name, file_info, directory):
-
-    ''' Saves file specified by file_info (a list of file lines, 
-        including newlines) to a new tempfile in directory
-    '''
-
-    with open(os.path.join(directory, file_name), 'w') as f:
-        for line in file_info:
-            f.write(line)
-
+from util import (save_file,
+                  create_n_sublists,
+                  logging_thread)
 
 def reformat_parsed_article(parsed_article_path):
 
@@ -133,27 +126,6 @@ def process_and_run_chunk(filepaths_args_tuple):
             subprocess.check_output(['cp', '-t', args.output_directory+'/'] + all_tempfiles)
         except subprocess.CalledProcessError:
             l.critical('Copy error, chunk: {}'.format(list_of_file_paths))
-
-def create_n_sublists(full_list, n=10):
-
-    ''' Returns a list of n sublists generated from full_list using stride of n
-    '''
-
-    return [full_list[i::n] for i in range(n)]
-
-def logging_thread(q):
-
-    ''' Handles logging to logfile while other processes are running
-
-        (exits upon receiving None in queue)
-    '''
-
-    while True:
-        record = q.get()
-        if record is None:
-            break
-        logger = logging.getLogger(record.name)
-        logger.handle(record)
 
 def main(args):
 
