@@ -16,6 +16,40 @@ from queue import Queue
 from preprocess import (util, 
                         chem_ner)
 
+class UtilTestCase(unittest.TestCase):
+
+    ''' Some tests for preprocess.util
+    '''
+
+    def test_util_save_file_works(self):
+
+        file_lines = ['fileline1\n', 'fileline2\n', 'fileline3\n']
+        with tempfile.TemporaryDirectory() as tempdir:
+            file_name = 'testfile'
+            util.save_file(file_name, file_lines, tempdir)
+            new_file_path = os.path.join(tempdir, file_name)
+            self.assertTrue(os.path.isfile(new_file_path))
+
+            with open(new_file_path) as f:
+                self.assertEqual(len(f.readlines()), 3)
+
+    def test_create_n_sublists(self):
+
+        l = list(range(50))
+        chunked_10 = util.create_n_sublists(l, n=10)
+        self.assertEqual(len(chunked_10), 10)
+
+        # check sublist sizes (no remainder after splitting)
+        chunked_10_sizes_correct = (5,)*10
+        chunked_10_sizes = tuple(len(x) for x in chunked_10)
+        self.assertEqual(chunked_10_sizes, chunked_10_sizes_correct)
+
+        # check sublists sizes (remainder after splitting)
+        chunked_7 = util.create_n_sublists(l, n=7)
+        chunked_7_sizes_correct = (8,)+(7,)*6
+        chunked_7_sizes = tuple(len(x) for x in chunked_7)
+        self.assertEqual(chunked_7_sizes, chunked_7_sizes_correct)
+
 class NERTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -37,15 +71,5 @@ class NERTestCase(unittest.TestCase):
         pass
     #     # os.unlink(self.tmpfile.name)
 
-    def test_util_save_file_works(self):
 
-        file_lines = ['fileline1\n', 'fileline2\n', 'fileline3\n']
-        with tempfile.TemporaryDirectory() as tempdir:
-            file_name = 'testfile'
-            util.save_file(file_name, file_lines, tempdir)
-            new_file_path = os.path.join(tempdir, file_name)
-            self.assertTrue(os.path.isfile(new_file_path))
-
-            with open(new_file_path) as f:
-                self.assertEqual(len(f.readlines()), 3)
 
