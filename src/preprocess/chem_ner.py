@@ -23,7 +23,7 @@ from itertools import repeat
 import multiprocessing as mp
 from tqdm import tqdm
 
-from util import (save_file,
+from .util import (save_file,
                   create_n_sublists,
                   logging_thread)
 
