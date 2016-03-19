@@ -23,63 +23,10 @@ from itertools import repeat
 import multiprocessing as mp
 from tqdm import tqdm
 
-from .util import (save_file,
+from util import (save_file,
                   create_n_sublists,
                   logging_thread)
-
-def reformat_parsed_article(parsed_article_path):
-
-    ''' Read in file parsed_article_path with format:
-        title\tsome_title_text
-        [abs\t]some_abstract_text
-        p\tparagraph1_text
-        p\tparagraph2_text
-        ...
-
-        Output:
-        List of new file lines (including newlines) with format:
-        [escaped DOI]_a|article_title
-        [escaped_DOI]_a|article_abstract
-
-        [escaped DOI]_1|article_title
-        [escaped_DOI]_1|article_paragraph1
-
-        [escaped DOI]_2|article_title
-        [escaped_DOI]_2|article_paragraph2
-    '''
-
-    with open(parsed_article_path) as f:
-        title_line = f.readline().rstrip('\n')
-        if not title_line.startswith('title'):
-            print('Not a title line...')
-            return
-        body = [line.rstrip('\n') for line in f.readlines()]
-
-    article_title = title_line.split('\t')[1]
-    escaped_doi = os.path.basename(parsed_article_path)
-
-    new_file_lines = []
-    new_title_line = escaped_doi+'_{}|t|'+article_title
-
-    # if there is an abstract line, treat it separately
-    if body[0].startswith('abs\t'):
-        abstract = body[0].split('\t')[1]
-        new_file_lines.append(new_title_line.format('a'))
-        new_file_lines.append(escaped_doi+'_a|a|'+abstract)
-        new_file_lines.append('')
-        body = body[1:]
-
-    for line_num, line in enumerate(body):
-        new_file_lines.append(new_title_line.format(line_num+1))
-
-        # allows for tabs in the paragraph content...
-        paragraph_content = '\t'.join(line.split('\t')[1:])
-        new_file_lines.append(escaped_doi+
-                              '_{}|a|'.format(line_num+1)+
-                              paragraph_content)
-        new_file_lines.append('')
-
-    return (escaped_doi, [line+'\n' for line in new_file_lines])
+from reformat import (parse_parform_file, parform_to_pubtator)
 
 def process_and_run_chunk(filepaths_args_tuple):
 
@@ -96,8 +43,15 @@ def process_and_run_chunk(filepaths_args_tuple):
     qh = logging.handlers.QueueHandler(q)
     l = logging.getLogger()
 
-    reformatted_files = [reformat_parsed_article(file_path) 
-                         for file_path in list_of_file_paths]
+    parsed_files = [parse_parform_file(file_path)
+                    for file_path in list_of_file_paths]
+
+    # filter out files with no title line 
+    # (for which parse_parform_file returned None)
+    parsed_files = [f for f in parsed_files if f]
+
+    reformatted_files = [parform_to_pubtator(escaped_doi, title_line, body)
+                         for escaped_doi, title_line, body in parsed_files]
 
     with tempfile.TemporaryDirectory() as input_tempdir, tempfile.TemporaryDirectory() as output_tempdir:
         for doi_filename, file_info in reformatted_files:

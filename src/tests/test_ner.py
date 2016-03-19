@@ -71,5 +71,3 @@ class NERTestCase(unittest.TestCase):
         pass
     #     # os.unlink(self.tmpfile.name)
 
-
-
