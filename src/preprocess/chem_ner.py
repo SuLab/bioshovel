@@ -111,16 +111,20 @@ def process_and_run_chunk(filepaths_args_tuple):
             save_file(doi_filename, file_info, input_tempdir)
 
         try:
-            subprocess.check_output(['perl', 
-                                     os.path.join(args.tmchem, 'tmChem.pl'), 
-                                     '-i', input_tempdir,
-                                     '-o', output_tempdir,
-                                     '-m', os.path.join(args.tmchem, 
-                                                        'Model', 
-                                                        'All.Model')
-                                     ],
-                                    cwd=args.tmchem)
-        except subprocess.CalledProcessError:
+            out = subprocess.check_output(['perl', 
+                                          os.path.join(args.tmchem, 
+                                                       'tmChem.pl'), 
+                                          '-i', input_tempdir,
+                                          '-o', output_tempdir,
+                                          '-m', os.path.join(args.tmchem, 
+                                                             'Model', 
+                                                             'All.Model')
+                                          ],
+                                          cwd=args.tmchem,
+                                          stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as err:
+            string_error = err.output.decode(encoding='UTF-8').rstrip('\n')
+            l.critical('tmChem error: {}'.format(string_error))
             l.critical('tmChem error while processing chunk: {}'.format(list_of_file_paths))
 
         all_tempfiles = glob(os.path.join(output_tempdir, '*'))
