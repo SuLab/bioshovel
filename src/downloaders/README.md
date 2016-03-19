@@ -1,4 +1,4 @@
-# Information Regarding Article Downloaders
+# Open Access Article Downloaders
 
 Information regarding when each corpus downloader was run is contained in this
 file.
@@ -7,12 +7,30 @@ file.
 
 Corpus | Last Updated
 --- | ---
-`plos` |
+`plos` | 2016-03-11 18:54 UTC
+`elife` | 2016-03-08 17:35 UTC
 `elsevier` | 2016-03-13 07:12 UTC
 
 ---
 
 ### PLOS Downloading Information
+
+The PLOS API appears to be nonfunctional at the moment, so we resort to [DOI](https://en.wikipedia.org/wiki/Digital_object_identifier) scraping and XML-format article downloads.
+
+Most of the PLOS journals have journal archive pages with lists of issues, _e.g._, <http://journals.plos.org/plosbiology/volume>
+
+From the list of issues on this page, we can access each issue's Table of Contents (ToC) page, _e.g._, <http://journals.plos.org/plosbiology/issue?id=info%3Adoi%2F10.1371%2Fissue.pbio.v14.i02>
+
+From a ToC page, we can obtain DOIs for all articles in an issue. 
+
+The list of DOIs can then be used to access articles with URLs of the format:
+`http://journals.plos.org/plosbiology/article/asset?id=[escaped_DOI]` where `[escaped_doi]` will be a DOI with its forward slash escaped, _e.g._, `10.1371/journal.pbio.1002384.XML` -> `10.1371%2Fjournal.pbio.1002384.XML`
+
+PLOS ONE articles can be accessed in a similar way by first compiling a list of DOIs from the _list view_ of **Biology and life sciences** articles here: <http://journals.plos.org/plosone/browse/biology_and_life_sciences?resultView=list>
+
+### eLife Downloading Information
+
+eLife has made XML versions of their articles available at <https://github.com/elifesciences/elife-articles>
 
 ### Elsevier Downloading Information
 
