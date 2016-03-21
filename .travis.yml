@@ -1,8 +1,8 @@
 language: python
-branch: all_branches: true
+branch: dev
 python:
     - "3.4"
     - "3.5"
 install: "pip3 install -r requirements.txt"
 script:
-    nosetests
+    python3 -m unittest discover
