@@ -13,8 +13,9 @@ import textwrap
 import unittest
 from queue import Queue
 
-from preprocess import (util, 
-                        chem_ner)
+from preprocess import (chem_ner,
+                        reformat,
+                        util)
 
 class UtilTestCase(unittest.TestCase):
 

@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
+'''chem_ner.py
 
-# chem_ner.py
+requires Perl to be available in $PATH
 
-# requires Perl to be available in $PATH
+usage:
+cd bioshovel/src # this is the parent directory of this script file
+python3 -m preprocess.chem_ner [path_to_paragraph_documents] [output_directory] --tmchem [path/to/tmChem.pl] --logdir [path/to/save/logfile]
 
-# usage:
-# python3 chem_ner.py [path_to_paragraph_documents] [output_directory] --tmchem [path/to/tmChem.pl] --logdir [path/to/save/logfile]
-
-# runs:
-# perl tmChem.pl -i inputdir -o outputdir -m Model/All.Model
+runs:
+perl tmChem.pl -i inputdir -o outputdir -m Model/All.Model
+'''
 
 import argparse
 import logging
@@ -23,10 +24,11 @@ from itertools import repeat
 import multiprocessing as mp
 from tqdm import tqdm
 
-from util import (save_file,
-                  create_n_sublists,
-                  logging_thread)
-from reformat import (parse_parform_file, parform_to_pubtator)
+from preprocess.util import (save_file,
+                             create_n_sublists,
+                             logging_thread)
+from preprocess.reformat import (parse_parform_file, 
+                                 parform_to_pubtator)
 
 def process_and_run_chunk(filepaths_args_tuple):
 
