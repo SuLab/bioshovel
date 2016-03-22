@@ -43,5 +43,5 @@ def file_exists_or_exit(file_path):
     '''
 
     if not os.path.exists(file_path):
-        print('File does not exist: {}'.format(file_path), file=sys.stderr)
+        print('Required file does not exist: {}'.format(file_path), file=sys.stderr)
         sys.exit(1)
