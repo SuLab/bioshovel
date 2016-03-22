@@ -68,3 +68,6 @@ data/
 
 # Program logs
 logs/
+
+# NER tools
+tools/
