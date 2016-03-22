@@ -4,6 +4,7 @@
 
 import logging
 import os
+import sys
 
 def save_file(file_name, file_info, directory):
 
@@ -35,3 +36,12 @@ def logging_thread(q):
             break
         logger = logging.getLogger(record.name)
         logger.handle(record)
+
+def file_exists_or_exit(file_path):
+
+    ''' Exit if the file at specified by file_path doesn't exist
+    '''
+
+    if not os.path.exists(file_path):
+        print('File does not exist: {}'.format(file_path), file=sys.stderr)
+        sys.exit(1)

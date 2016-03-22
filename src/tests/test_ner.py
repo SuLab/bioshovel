@@ -8,9 +8,11 @@
 # util.py
 
 import os
+import sys
 import tempfile
 import textwrap
 import unittest
+from io import StringIO
 from queue import Queue
 
 from preprocess import (chem_ner,
@@ -50,6 +52,16 @@ class UtilTestCase(unittest.TestCase):
         chunked_7_sizes_correct = (8,)+(7,)*6
         chunked_7_sizes = tuple(len(x) for x in chunked_7)
         self.assertEqual(chunked_7_sizes, chunked_7_sizes_correct)
+
+    def test_file_exists_or_exit(self):
+
+        # silence STDERR output from this test
+        sys.stderr = StringIO()
+
+        with self.assertRaises(SystemExit) as e:
+            util.file_exists_or_exit('/this/file/doesnt/exist')
+
+        self.assertEqual(e.exception.code, 1)
 
 class NERTestCase(unittest.TestCase):
 

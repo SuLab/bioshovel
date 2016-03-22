@@ -26,7 +26,8 @@ from tqdm import tqdm
 
 from preprocess.util import (save_file,
                              create_n_sublists,
-                             logging_thread)
+                             logging_thread,
+                             file_exists_or_exit)
 from preprocess.reformat import (parse_parform_file, 
                                  parform_to_pubtator)
 
@@ -85,10 +86,7 @@ def process_and_run_chunk(filepaths_args_tuple):
 
 def main(args):
 
-    # check to make sure tmChem.pl exists
-    if not os.path.exists(os.path.join(args.tmchem,'tmChem.pl')):
-        print('tmChem.pl does not exist in path: {}'.format(args.tmchem))
-        sys.exit(1)
+    file_exists_or_exit(os.path.join(args.tmchem,'tmChem.pl'))
 
     all_files = glob(os.path.join(args.paragraph_path, '*'))
     filelist_with_sublists = create_n_sublists(all_files, mp.cpu_count()*10)
