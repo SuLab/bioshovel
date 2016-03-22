@@ -2,3 +2,4 @@ beautifulsoup4==4.4.1
 Unidecode==0.4.19
 lxml==3.5.0
 tqdm==3.8.0
+psutil==4.1.0
