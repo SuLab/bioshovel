@@ -64,10 +64,10 @@ target/
 #-------------------------------------------------------------------------------
 
 # Downloaded full text articles
-data/
+data
 
 # Program logs
-logs/
+logs
 
 # NER tools
-tools/
+tools
