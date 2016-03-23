@@ -129,6 +129,6 @@ if __name__ == '__main__':
     parser.add_argument('paragraph_path', help='Directory of parsed paragraph files')
     parser.add_argument('output_directory', help='Final output directory')
     parser.add_argument('--tmchem', help='Directory where tmChem.pl is located', default=os.getcwd())
-    parser.add_argument('--logdir', help='Directory where logfile should be stored', default='../../logs')
+    parser.add_argument('--logdir', help='Directory where logfile should be stored', default='../logs')
     args = parser.parse_args()
     main(args)
