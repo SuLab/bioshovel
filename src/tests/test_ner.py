@@ -98,6 +98,19 @@ class NERTestCase(unittest.TestCase):
         self.assertEqual(file_lines[1][:50], abstract_line_1[:50])
         self.assertEqual(file_lines[4][:50], abstract_line_2[:50])
 
+    def test_parform_to_pubtator_removes_pipe_char(self):
+
+        ''' pipe characters cause problems with some pubtator tools
+        '''
+
+        self.body[0] = 'abs\tPolycomb Repressive Complex 2 (PR|C2) is essential for gene silencing, establishing transcriptional repression of specific genes by tri-methylating Lysine 27 of histone H3, a process mediated by cofactors such as AEBP2. In spite of its biological importance, little is known about PRC2 architecture and subunit organization. Here, we present the first three-dimensional electron microscopy structure of the human PRC2 complex bound to its cofactor AEBP2. Using a novel internal protein tagging-method, in combination with isotopic chemical cross-linking and mass spectrometry, we have localized all the PRC2 subunits and their functional domains and generated a detailed map of interactions. The position and stabilization effect of AEBP2 suggests an allosteric role of this cofactor in regulating gene silencing. Regions in PRC2 that interact with modified histone tails are localized near the methyltransferase site, suggesting a molecular mechanism for the chromatin-based regulation of PRC2 activity.'
+        correct = self.escaped_doi+'_a|a|Polycomb Repressive Complex 2 (PRC2) is essential for gene silencing, establishing transcriptional repression of specific genes by tri-methylating Lysine 27 of histone H3, a process mediated by cofactors such as AEBP2. In spite of its biological importance, little is known about PRC2 architecture and subunit organization. Here, we present the first three-dimensional electron microscopy structure of the human PRC2 complex bound to its cofactor AEBP2. Using a novel internal protein tagging-method, in combination with isotopic chemical cross-linking and mass spectrometry, we have localized all the PRC2 subunits and their functional domains and generated a detailed map of interactions. The position and stabilization effect of AEBP2 suggests an allosteric role of this cofactor in regulating gene silencing. Regions in PRC2 that interact with modified histone tails are localized near the methyltransferase site, suggesting a molecular mechanism for the chromatin-based regulation of PRC2 activity.'
+
+        pubtator_file_lines = reformat.parform_to_pubtator(self.escaped_doi,
+                                                           self.title_line,
+                                                           self.body)
+
+        self.assertEqual(pubtator_file_lines[1][1][:50], correct[:50])
 
 class NERTempFileTestCase(NERTestCase):
 

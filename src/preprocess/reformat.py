@@ -46,7 +46,7 @@ def parform_to_pubtator(escaped_doi, title_line, body):
         'title\tsome_title_text'
 
         body is list with "parform" (paragraph format) format:
-        [[abs\tsome_abstract_text'], (abstract optional)
+        ['abs\tsome_abstract_text', (abstract optional)
          'p\tparagraph1_text',
          'p\tparagraph2_text',
          ...
@@ -63,6 +63,9 @@ def parform_to_pubtator(escaped_doi, title_line, body):
         [escaped DOI]_2|article_title
         [escaped_DOI]_2|article_paragraph2
     '''
+
+    # replace any pipe characters - they interfere with some pubtator tools
+    body = [line.replace('|', '') for line in body]
 
     new_file_lines = []
     article_title = title_line.split('\t')[1]
