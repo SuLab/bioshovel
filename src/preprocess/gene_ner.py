@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-'''chem_ner.py
+'''gene_ner.py
+
+For performing gene name-entity recognition on paragraph data in parform format
 
 requires Perl to be available in $PATH
 
 usage:
 cd bioshovel/src # this is the parent directory of this script file
-python3 -m preprocess.chem_ner [path_to_paragraph_documents] [output_directory] --tmchem [path/to/tmChem.pl] --logdir [path/to/save/logfile]
+python3 -m preprocess.gene_ner [path_to_paragraph_documents] [output_directory] --gnormplus [absolute/path/to/GNormPlus.pl] --logdir [path/to/save/logfile]
 
 runs:
-perl tmChem.pl -i inputdir -o outputdir -m Model/All.Model
+perl GNormPlus.pl -i inputdir -o outputdir -s setup.txt
 '''
 
 import argparse
@@ -35,7 +37,7 @@ def process_and_run_chunk(filepaths_args_tuple):
 
     ''' Generates reformatted files for each file path in 
         list_of_file_paths, saves them to a single temp directory,
-        and calls tmChem using subprocess
+        and calls GNormPlus using subprocess
     '''
 
     list_of_file_paths, args, q = filepaths_args_tuple
@@ -62,20 +64,19 @@ def process_and_run_chunk(filepaths_args_tuple):
 
         try:
             out = subprocess.check_output(['perl', 
-                                          os.path.join(args.tmchem, 
-                                                       'tmChem.pl'), 
+                                          os.path.join(args.gnormplus, 
+                                                       'GNormPlus.pl'), 
                                           '-i', input_tempdir,
                                           '-o', output_tempdir,
-                                          '-m', os.path.join(args.tmchem, 
-                                                             'Model', 
-                                                             'All.Model')
+                                          '-s', os.path.join(args.gnormplus, 
+                                                             'setup.txt')
                                           ],
-                                          cwd=args.tmchem,
+                                          cwd=args.gnormplus,
                                           stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as err:
             string_error = err.output.decode(encoding='UTF-8').rstrip('\n')
-            l.critical('tmChem error: {}'.format(string_error))
-            l.critical('tmChem error while processing chunk: {}'.format(list_of_file_paths))
+            l.critical('GNormPlus error: {}'.format(string_error))
+            l.critical('GNormPlus error while processing chunk: {}'.format(list_of_file_paths))
 
         all_tempfiles = glob(os.path.join(output_tempdir, '*'))
 
@@ -85,8 +86,8 @@ def process_and_run_chunk(filepaths_args_tuple):
             l.critical('Copy error, chunk: {}'.format(list_of_file_paths))
 
 def main(args):
-
-    file_exists_or_exit(os.path.join(args.tmchem,'tmChem.pl'))
+    
+    file_exists_or_exit(os.path.join(args.gnormplus, 'GNormPlus.pl'))
 
     all_files = glob(os.path.join(args.paragraph_path, '*'))
     filelist_with_sublists = create_n_sublists(all_files, mp.cpu_count()*10)
@@ -95,7 +96,7 @@ def main(args):
     if not os.path.isdir(args.output_directory):
         os.makedirs(args.output_directory)
 
-    log_filename = os.path.join(args.logdir, 'chem_ner.log')
+    log_filename = os.path.join(args.logdir, 'gene_ner.log')
     logging_format = '%(asctime)s %(name)-15s %(levelname)-8s %(processName)-10s %(message)s'
     logging.basicConfig(filename=log_filename,
                         format=logging_format,
@@ -125,10 +126,10 @@ def main(args):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Run tmChem on a directory of paragraph files')
+    parser = argparse.ArgumentParser(description='Run GNormPlus on a directory of paragraph files')
     parser.add_argument('paragraph_path', help='Directory of parsed paragraph files')
     parser.add_argument('output_directory', help='Final output directory')
-    parser.add_argument('--tmchem', help='Directory where tmChem.pl is located', default=os.getcwd())
-    parser.add_argument('--logdir', help='Directory where logfile should be stored', default='../../logs')
+    parser.add_argument('--gnormplus', help='Directory (absolute path) where GNormPlus.pl is located', default=os.getcwd())
+    parser.add_argument('--logdir', help='Directory where logfile should be stored', default='../logs')
     args = parser.parse_args()
     main(args)
