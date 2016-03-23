@@ -63,7 +63,7 @@ class UtilTestCase(unittest.TestCase):
 
         self.assertEqual(e.exception.code, 1)
 
-class NERTestCase(unittest.TestCase):
+class ReformatTestCase(unittest.TestCase):
 
     def setUp(self):
         self.escaped_doi = '10.7554%2FeLife.00005'
@@ -82,6 +82,8 @@ class NERTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+class ParformToPubtatorTests(ReformatTestCase):
 
     def test_parform_to_pubtator_format_is_correct(self):
         pubtator_file_lines = reformat.parform_to_pubtator(self.escaped_doi,
@@ -112,7 +114,7 @@ class NERTestCase(unittest.TestCase):
 
         self.assertEqual(pubtator_file_lines[1][1][:50], correct[:50])
 
-class NERTempFileTestCase(NERTestCase):
+class NERTempFileTestCase(ReformatTestCase):
 
     ''' Subclass that has a 'parfile' saved as a temporary file
     '''
