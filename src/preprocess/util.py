@@ -11,11 +11,16 @@ def save_file(file_name, file_info, directory):
 
     ''' Saves file specified by file_info (a list of file lines, 
         including newlines) to a new tempfile in directory
+
+        Return path to new file
     '''
 
-    with open(os.path.join(directory, file_name), 'w') as f:
+    new_file_path = os.path.join(directory, file_name)
+    with open(new_file_path, 'w') as f:
         for line in file_info:
             f.write(line)
+
+    return new_file_path
 
 def create_n_sublists(full_list, n=10):
 

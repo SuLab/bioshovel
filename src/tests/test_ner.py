@@ -29,8 +29,9 @@ class UtilTestCase(unittest.TestCase):
         file_lines = ['fileline1\n', 'fileline2\n', 'fileline3\n']
         with tempfile.TemporaryDirectory() as tempdir:
             file_name = 'testfile'
-            util.save_file(file_name, file_lines, tempdir)
+            returned_file_path = util.save_file(file_name, file_lines, tempdir)
             new_file_path = os.path.join(tempdir, file_name)
+            self.assertEqual(returned_file_path, new_file_path)
             self.assertTrue(os.path.isfile(new_file_path))
 
             with open(new_file_path) as f:
