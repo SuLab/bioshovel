@@ -99,6 +99,13 @@ class UtilTestCase(unittest.TestCase):
         return_val = util.shell_command_exists_or_exit('python3 some_script.py')
         self.assertTrue(return_val)
 
+    def test_ensure_path_exists_creates_a_nonexistent_path(self):
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            new_dir = os.path.join(tmpdirname, 'new_directory')
+            util.ensure_path_exists(new_dir)
+            self.assertTrue(os.path.isdir(new_dir))
+
 class ReformatTestCase(unittest.TestCase):
 
     def setUp(self):

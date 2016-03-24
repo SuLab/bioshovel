@@ -64,3 +64,11 @@ def shell_command_exists_or_exit(command):
         sys.exit(1)
 
     return True
+
+def ensure_path_exists(path):
+
+    ''' check if directory exists. if not, create it.
+    '''
+
+    if not os.path.isdir(path):
+        os.makedirs(path)
