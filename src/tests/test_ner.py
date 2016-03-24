@@ -63,6 +63,42 @@ class UtilTestCase(unittest.TestCase):
 
         self.assertEqual(e.exception.code, 1)
 
+    def test_shell_command_exists_or_exit_fails_with_bogus_command(self):
+
+        ''' a shell command that doesn't exist should cause a python call to
+            sys.exit(1)
+        '''
+
+        # silence STDERR output from this test
+        sys.stderr = StringIO()
+
+        with self.assertRaises(SystemExit) as e:
+            util.shell_command_exists_or_exit('asdfasf') # fake shell command
+
+        self.assertEqual(e.exception.code, 1)
+
+    def test_shell_command_exists_or_exit_returns_with_real_command(self):
+
+        # silence STDERR output from this test
+        sys.stderr = StringIO()
+
+        return_val = util.shell_command_exists_or_exit('python3')
+        self.assertTrue(return_val)
+
+    def test_shell_command_exists_or_exit_returns_with_real_two_part_command(self):
+
+        ''' trying to run this command with a 2+ part expression (such as 
+            `python3 some_script.py` should only check the first portion, 
+            `python3`)
+        '''
+
+        # silence STDERR output from this test
+        sys.stderr = StringIO()
+
+        # should only use the 'python3' portion of the command
+        return_val = util.shell_command_exists_or_exit('python3 some_script.py')
+        self.assertTrue(return_val)
+
 class ReformatTestCase(unittest.TestCase):
 
     def setUp(self):

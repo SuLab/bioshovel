@@ -4,6 +4,7 @@
 
 import logging
 import os
+import subprocess
 import sys
 
 def save_file(file_name, file_info, directory):
@@ -45,3 +46,21 @@ def file_exists_or_exit(file_path):
     if not os.path.exists(file_path):
         print('Required file does not exist: {}'.format(file_path), file=sys.stderr)
         sys.exit(1)
+
+def shell_command_exists_or_exit(command):
+
+    ''' Exit if command (string) does not exist in system $PATH
+
+        (runs `which [command]` and checks for nonzero exit code)
+    '''
+
+    try:
+        subprocess.check_call(['which']+command.split(' ')[:1],
+                              stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        print('Command `{}` does not exist in $PATH -- exiting'.format(command), 
+              file=sys.stderr)
+        sys.exit(1)
+
+    return True
