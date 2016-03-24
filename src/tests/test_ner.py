@@ -183,3 +183,64 @@ class NERTempFileTestCase(ReformatTestCase):
         self.assertTrue(len(body) == 4)
         self.assertTrue(body[0].startswith('abs\t'))
         self.assertTrue(all(line.startswith('p\t') for line in body[1:]))
+
+class ParformToPlaintextTests(ReformatTestCase):
+
+    ''' Some tests for the reformat.parform_to_plaintext function
+    '''
+
+    def setUp(self):
+        super().setUp()
+
+        self.correct_title_line = 'Molecular architecture of human polycomb repressive complex 2'
+        self.correct_first_paragraph_line = 'Polycomb Repressive Complex 2 (PRC2) is essential for gene silencing, establishing transcriptional repression of specific genes by tri-methylating Lysine 27 of histone H3, a process mediated by cofactors such as AEBP2. In spite of its biological importance, little is known about PRC2 architecture and subunit organization. Here, we present the first three-dimensional electron microscopy structure of the human PRC2 complex bound to its cofactor AEBP2. Using a novel internal protein tagging-method, in combination with isotopic chemical cross-linking and mass spectrometry, we have localized all the PRC2 subunits and their functional domains and generated a detailed map of interactions. The position and stabilization effect of AEBP2 suggests an allosteric role of this cofactor in regulating gene silencing. Regions in PRC2 that interact with modified histone tails are localized near the methyltransferase site, suggesting a molecular mechanism for the chromatin-based regulation of PRC2 activity.'
+        self.correct_last_paragraph_line = 'Ciferri et al. shed new light on the structure of this complex by using electron microscopy to produce the first three-dimensional image of the human PRC2 complex bound to its cofactor. By incorporating various protein tags into the co-factor and the four subunits of the PRC2, and by employing mass spectrometry and other techniques, Ciferri et al. were able to identify 60 or so interaction sites within the PRC2-cofactor system, and to determine their locations within the overall structure.'
+
+    def test_parform_to_plaintext_reformat_is_correct(self):
+
+        doi, plaintext_file_lines = reformat.parform_to_plaintext(self.escaped_doi,
+                                                                  self.title_line,
+                                                                  self.body)
+
+        title_line = plaintext_file_lines[0].rstrip('\n')
+        self.assertEqual(title_line[:50], self.correct_title_line[:50])
+
+        first_paragraph_line = plaintext_file_lines[1].rstrip('\n')
+        self.assertEqual(first_paragraph_line[:50],
+                         self.correct_first_paragraph_line[:50])
+
+        last_paragraph_line = plaintext_file_lines[-1].rstrip('\n')
+        self.assertEqual(last_paragraph_line[:50],
+                         self.correct_last_paragraph_line[:50])
+
+    def test_parform_to_plaintext_reformat_adds_period_after_title(self):
+
+        ''' if period_following_title kwarg is True, the returned title line 
+            should have a period after it
+
+            (helps with CoreNLP sentence splitting of title line 
+            from sentence 1)
+        '''
+
+        doi, plaintext_file_lines = reformat.parform_to_plaintext(self.escaped_doi,
+                                                                  self.title_line,
+                                                                  self.body,
+                                                                  period_following_title=True)
+
+        title_line = plaintext_file_lines[0].rstrip('\n')
+        correct_title_line_with_period = self.correct_title_line + '.'
+        self.assertEqual(title_line[-50:], correct_title_line_with_period[-50:])
+
+    def test_parform_to_plaintext_reformat_adds_newlines_correctly(self):
+
+        ''' if newlines kwarg is True, each line of the output should have an empty
+            newline after it
+        '''
+
+        doi, plaintext_file_lines = reformat.parform_to_plaintext(self.escaped_doi,
+                                                                  self.title_line,
+                                                                  self.body,
+                                                                  newlines=True)
+        even_numbered_lines = plaintext_file_lines[1::2]
+        staggered_newlines_present = all([line=='\n' for line in even_numbered_lines])
+        self.assertTrue(staggered_newlines_present)
