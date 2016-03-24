@@ -198,9 +198,8 @@ class ParformToPlaintextTests(ReformatTestCase):
 
     def test_parform_to_plaintext_reformat_is_correct(self):
 
-        doi, plaintext_file_lines = reformat.parform_to_plaintext(self.escaped_doi,
-                                                                  self.title_line,
-                                                                  self.body)
+        plaintext_file_lines = reformat.parform_to_plaintext(self.title_line,
+                                                             self.body)
 
         title_line = plaintext_file_lines[0].rstrip('\n')
         self.assertEqual(title_line[:50], self.correct_title_line[:50])
@@ -222,10 +221,9 @@ class ParformToPlaintextTests(ReformatTestCase):
             from sentence 1)
         '''
 
-        doi, plaintext_file_lines = reformat.parform_to_plaintext(self.escaped_doi,
-                                                                  self.title_line,
-                                                                  self.body,
-                                                                  period_following_title=True)
+        plaintext_file_lines = reformat.parform_to_plaintext(self.title_line,
+                                                             self.body,
+                                                             period_following_title=True)
 
         title_line = plaintext_file_lines[0].rstrip('\n')
         correct_title_line_with_period = self.correct_title_line + '.'
@@ -237,10 +235,9 @@ class ParformToPlaintextTests(ReformatTestCase):
             newline after it
         '''
 
-        doi, plaintext_file_lines = reformat.parform_to_plaintext(self.escaped_doi,
-                                                                  self.title_line,
-                                                                  self.body,
-                                                                  newlines=True)
+        plaintext_file_lines = reformat.parform_to_plaintext(self.title_line,
+                                                             self.body,
+                                                             newlines=True)
         even_numbered_lines = plaintext_file_lines[1::2]
         staggered_newlines_present = all([line=='\n' for line in even_numbered_lines])
         self.assertTrue(staggered_newlines_present)

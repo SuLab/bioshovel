@@ -92,16 +92,13 @@ def parform_to_pubtator(escaped_doi, title_line, body):
 
     return (escaped_doi, [line+'\n' for line in new_file_lines])
 
-def parform_to_plaintext(escaped_doi, title_line, body, 
+def parform_to_plaintext(title_line, body, 
                          newlines=False, period_following_title=False):
 
     ''' Input is a tuple (doi, title_line, body) where doi is the escaped DOI 
         from the filename, title_line is a string, and body is a list of 
         abstract and paragraph lines in the file 
         (trailing newline characters stripped from all input lines)
-
-        escaped_doi is a DOI (string) with forward slash escaped, 
-        e.g., '10.1371%2Fjournal.pbio.1002384'
 
         title_line is a string:
         'title\tsome_title_text'
@@ -145,4 +142,4 @@ def parform_to_plaintext(escaped_doi, title_line, body,
                 new_file_lines_with_newlines.append('')
         new_file_lines = new_file_lines_with_newlines
 
-    return (escaped_doi, [line+'\n' for line in new_file_lines])
+    return [line+'\n' for line in new_file_lines]
