@@ -125,13 +125,13 @@ def create_pmid_doi_mapping(args, escape_slash=True):
 def main(args):
 
     ensure_path_exists(args.output_directory)
-    pmid_path = os.path.join(args.output_directory, 'by_pmid')
-    ensure_path_exists(pmid_path)
+    # pmid_path = os.path.join(args.output_directory, 'by_pmid')
+    # ensure_path_exists(pmid_path)
 
     if args.doiindex:
         file_exists_or_exit(args.doiindex)
-        doi_path = os.path.join(args.output_directory, 'by_doi')
-        ensure_path_exists(doi_path)
+        # doi_path = os.path.join(args.output_directory, 'by_doi')
+        # ensure_path_exists(doi_path)
 
     pmid_doi_map = create_pmid_doi_mapping(args)
 
@@ -140,12 +140,38 @@ def main(args):
     pmid_filenames = []
     skipped_files = 0
 
+    total_citation_count = 0
     print('Processing {} XML files...'.format(len(all_files)))
     for xml_filepath in tqdm(all_files):
+
         root = get_root_object(xml_filepath)
         citations = get_element('MedlineCitation', root)
 
         for citation in citations:
+
+            # update save directories every 10k files.
+            #
+            # directory structure will be:
+            #   [base_dir]/0000/by_pmid/
+            #   [base_dir]/0000/by_doi/
+            #   [base_dir]/0001/by_pmid/
+            #   [base_dir]/0001/by_doi/
+            #   ...
+            #
+            # (no subdirectory will have > 10000 files)
+            if total_citation_count % 10000 == 0:
+                pmid_path = os.path.join(args.output_directory,
+                                         '{0:0>4}'.format(total_citation_count//10000),
+                                         'by_pmid')
+                ensure_path_exists(pmid_path)
+
+                if args.doiindex:
+                    doi_path = os.path.join(args.output_directory,
+                                            '{0:0>4}'.format(total_citation_count//10000),
+                                            'by_doi')
+                    ensure_path_exists(doi_path)
+
+            total_citation_count += 1
 
             abstracts = get_element('AbstractText', citation)
             if not abstracts: # not all MedlineCitations have Abstracts...
