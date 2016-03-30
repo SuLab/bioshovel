@@ -53,8 +53,18 @@ def get_abstract_parent_info(abstract):
     parent_article = parent_abstract.getparent()
     parent_citation = parent_article.getparent()
     parent_citation_set = parent_citation.getparent()
-    pmid = parent_citation.find('PMID').text
-    title = parent_article.find('ArticleTitle').text
+    has_pmid = parent_citation.find('PMID')
+    has_title = parent_article.find('ArticleTitle')
+
+    if has_pmid:
+        pmid = has_pmid.text
+    else:
+        pmid = None
+
+    if has_title:
+        title = has_title.text
+    else:
+        title = None
 
     info_dict = {}
     info_dict['abstract_text'] = abstract.text
@@ -128,6 +138,7 @@ def main(args):
     all_files = glob(os.path.join(args.xml_file_directory, '*'))
     doi_filenames = []
     pmid_filenames = []
+    skipped_files = 0
 
     print('Processing {} XML files...'.format(len(all_files)))
     for xml_filepath in tqdm(all_files):
@@ -145,10 +156,16 @@ def main(args):
             first_abstract_section = abstracts[0]
             d = get_abstract_parent_info(first_abstract_section)
 
-            combined_abstract = combine_all_abstract_text_tags(d['parent_abstract'])
-            file_lines = create_filelines(d['title'], combined_abstract)
-
             pmid = d['pmid']
+            title = d['title']
+            if not pmid or not d['title']:
+                # if no PMID, no easy way to identify article (skip)
+                # if no title, nothing to include in PubTator title line (skip)
+                skipped_files += 1
+                continue
+
+            combined_abstract = combine_all_abstract_text_tags(d['parent_abstract'])
+            file_lines = create_filelines(title, combined_abstract)
 
             doi_file_name = pmid_doi_map.get(pmid)
             if doi_file_name:
@@ -162,6 +179,7 @@ def main(args):
     if args.doiindex:
         print('{} files saved by DOI to {}'.format(len(doi_filenames),
                                                    doi_path))
+    print('{} MEDLINE citations skipped'.format(skipped_files))
 
 
 
