@@ -56,12 +56,12 @@ def get_abstract_parent_info(abstract):
     has_pmid = parent_citation.find('PMID')
     has_title = parent_article.find('ArticleTitle')
 
-    if has_pmid:
+    if has_pmid is not None:
         pmid = has_pmid.text
     else:
         pmid = None
 
-    if has_title:
+    if has_title is not None:
         title = has_title.text
     else:
         title = None
