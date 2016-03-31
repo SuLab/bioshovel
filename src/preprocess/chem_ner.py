@@ -15,13 +15,15 @@ import argparse
 import logging
 import logging.handlers
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
 import threading
-from glob import glob
+from glob import glob, iglob
 from itertools import repeat
 import multiprocessing as mp
+from pathlib import Path
 from tqdm import tqdm
 
 from preprocess.util import (save_file,
@@ -88,8 +90,13 @@ def main(args):
 
     file_exists_or_exit(os.path.join(args.tmchem,'tmChem.pl'))
 
-    all_files = glob(os.path.join(args.paragraph_path, '*'))
-    filelist_with_sublists = create_n_sublists(all_files, mp.cpu_count()*10)
+    args.paragraph_path = os.path.abspath(args.paragraph_path)
+
+    # glob.glob doesn't support double star expressions in Python 3.4, so using this:
+    print('Reading input files...')
+    all_files = [str(f) for f in tqdm(Path(args.paragraph_path).glob('**/*')) if f.is_file()]
+
+    filelist_with_sublists = create_n_sublists(all_files, mp.cpu_count()*1000)
 
     # check if save_directory exists and create if necessary
     if not os.path.isdir(args.output_directory):
@@ -118,6 +125,20 @@ def main(args):
             pass
 
     logging.info('Done processing {} files'.format(len(all_files)))
+
+    max_files_per_directory = 10000
+    if len(all_files) > max_files_per_directory:
+        print('Reorganizing output files into batches of {}...'.format(max_files_per_directory))
+        for file_num, file_path in enumerate(tqdm(iglob(os.path.join(args.output_directory, '*')), total=len(all_files))):
+            if file_num % max_files_per_directory == 0:
+                # every n files, create new subdirectory and update current_subdir
+                subdir_name = '{0:0>4}'.format(file_num//max_files_per_directory)
+                path = Path(file_path)
+                new_dir = path.parent / subdir_name
+                new_dir.mkdir()
+                current_subdir = str(new_dir)
+            shutil.move(file_path, current_subdir)
+        logging.info('Done reorganizing files into subdirectories')
     
     # end logging_thread
     q.put(None)

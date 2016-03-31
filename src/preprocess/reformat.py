@@ -69,7 +69,7 @@ def parform_to_pubtator(escaped_doi, title_line, body):
     body = [line.replace('|', '') for line in body]
 
     new_file_lines = []
-    article_title = title_line.split('\t')[1]
+    article_title = title_line.split('\t')[1].replace('{','{{').replace('}','}}')
     new_title_line = escaped_doi+'_{}|t|'+article_title
 
     # if there is an abstract line, treat it separately
