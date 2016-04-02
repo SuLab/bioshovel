@@ -94,7 +94,7 @@ def main(args):
 
     # glob.glob doesn't support double star expressions in Python 3.4, so using this:
     print('Reading input files...')
-    all_files = [str(f) for f in tqdm(Path(args.paragraph_path).glob('**/*')) if f.is_file()]
+    all_files = [str(f) for f in tqdm(Path(args.paragraph_path).glob('**/*'), disable=args.notqdm) if f.is_file()]
 
     filelist_with_sublists = create_n_sublists(all_files, mp.cpu_count()*1000)
 
@@ -109,10 +109,10 @@ def main(args):
                         level=logging.INFO,
                         filemode='w')
 
-    print('Using {} cores to process {} files...'.format(mp.cpu_count(), 
+    print('Using {} cores to process {} files...'.format(args.poolsize,
                                                          len(all_files)))
 
-    with mp.Pool() as pool:
+    with mp.Pool(args.poolsize) as pool:
         mgr = mp.Manager()
         q = mgr.Queue()
         log_thread = threading.Thread(target=logging_thread, args=(q,))
@@ -121,7 +121,9 @@ def main(args):
                                         zip(filelist_with_sublists, 
                                             repeat(args),
                                             repeat(q)))
-        for i in tqdm(imap_gen, total=len(filelist_with_sublists)):
+        for i in tqdm(imap_gen,
+                      total=len(filelist_with_sublists),
+                      disable=args.notqdm):
             pass
 
     logging.info('Done processing {} files'.format(len(all_files)))
@@ -129,7 +131,10 @@ def main(args):
     max_files_per_directory = 10000
     if len(all_files) > max_files_per_directory:
         print('Reorganizing output files into batches of {}...'.format(max_files_per_directory))
-        for file_num, file_path in enumerate(tqdm(iglob(os.path.join(args.output_directory, '*')), total=len(all_files))):
+        for file_num, file_path in enumerate(tqdm(iglob(os.path.join(args.output_directory,
+                                                                     '*')),
+                                                  total=len(all_files),
+                                                  disable=args.notqdm)):
             if file_num % max_files_per_directory == 0:
                 # every n files, create new subdirectory and update current_subdir
                 subdir_name = '{0:0>4}'.format(file_num//max_files_per_directory)
@@ -151,5 +156,11 @@ if __name__ == '__main__':
     parser.add_argument('output_directory', help='Final output directory')
     parser.add_argument('--tmchem', help='Directory where tmChem.pl is located', default=os.getcwd())
     parser.add_argument('--logdir', help='Directory where logfile should be stored', default='../logs')
+    parser.add_argument('--poolsize',
+                        help='Size of multiprocessing process pool',
+                        type=int,
+                        default=mp.cpu_count())
+    parser.add_argument('--notqdm', help='Disable tqdm progress bar output',
+                        action='store_true')
     args = parser.parse_args()
     main(args)
