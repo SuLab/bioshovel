@@ -2,6 +2,7 @@
 
 # Helper functions for preprocess module
 
+import itertools
 import logging
 import os
 import subprocess
@@ -28,6 +29,15 @@ def create_n_sublists(full_list, n=10):
     '''
 
     return [full_list[i::n] for i in range(n)]
+
+def create_sublists_sized_n(full_list, n=500):
+
+    ''' Returns a list of sublists, each with length of n
+        (some lists will contain None values as filler)
+    '''
+
+    args = [iter(full_list)] * n
+    return itertools.zip_longest(*args)
 
 def logging_thread(q):
 

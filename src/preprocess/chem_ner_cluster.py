@@ -11,7 +11,7 @@ import textwrap
 from pathlib import Path
 from tqdm import tqdm
 
-from preprocess.util import (create_n_sublists,
+from preprocess.util import (create_sublists_sized_n,
                              ensure_path_exists,
                              file_exists_or_exit)
 
@@ -80,6 +80,8 @@ def create_sublist_symlinks(sublist, input_dir, max_files):
     '''
 
     for file_num, file_path in enumerate(sublist):
+        if not file_path:
+            continue
         if file_num % max_files == 0:
             subdir_name = '{0:0>4}'.format(file_num//max_files)
             current_subdir = os.path.join(input_dir, subdir_name)
@@ -99,39 +101,40 @@ def main(args):
     file_exists_or_exit(os.path.join(args.tmchem,'tmChem.pl'))
 
     # get all files (recursive)
-    print('Reading input files...')
-    all_files = [str(f) for f in tqdm(Path(args.paragraph_path).glob('**/*')) if f.is_file()]
+    print('Organizing input files and submitting jobs...')
+    all_files = (str(f) for f in tqdm(Path(args.paragraph_path).glob('**/*')) if f.is_file())
 
-    # divide list into n chunks (number of jobs to create)
-    print('Splitting input file list into batches...')
-    filelist_with_sublists = create_n_sublists(all_files, args.njobs)
+    # divide list into chunks of size n
+    filelist_with_sublists = create_sublists_sized_n(all_files, args.nfiles)
 
     # move job files into the appropriate subdirectories
-    # (don't store more than 1k per sub-subdirectory)
+    #   (don't store more than 1k per sub-subdirectory)
     # create job file for each subdirectory
-
-    print('Organizing input files and creating job files...')
+    # submit jobs
     base_input_directory = os.path.join(args.output_directory, 'input_files')
     job_dir = os.path.join(args.output_directory, 'job_files')
     output_directory = os.path.join(args.output_directory, 'output')
     for path in (base_input_directory, job_dir, output_directory):
         ensure_path_exists(path)
-    job_file_paths = []
-    for sublist_num, sublist in enumerate(tqdm(filelist_with_sublists)):
+    job_file_paths_failed = []
+    jobs_submitted_success = 0
+    for sublist_num, sublist in enumerate(filelist_with_sublists):
         sublist_dir = os.path.join(base_input_directory, 
                                    'sublist_{0:0>4}'.format(sublist_num))
         ensure_path_exists(sublist_dir)
         create_sublist_symlinks(sublist, sublist_dir, 1000)
         job_file_path = create_job_file(job_dir, sublist_dir, output_directory, sublist_num, args)
-        job_file_paths.append(job_file_path)
-
-    # submit jobs to queue ('new')
-    if args.submit:
-        print('Submitting {} jobs...'.format(len(job_file_paths)))
-        for job_file_path in tqdm(job_file_paths):
+        if args.submit:
             result = submit_pbs_job(job_file_path, queue=args.queue)
-            if not result:
-                print('Job submission failed: {}'.format(job_file_path))
+            if result:
+                jobs_submitted_success += 1
+            else:
+                job_file_paths_failed.append(job_file_path)
+
+    print('Successfully submitted {} jobs with {} failed submissions'.format(jobs_submitted_success,
+                                                                             len(job_file_paths_failed)))
+    for path in job_file_paths_failed:
+        print('FAILED TO SUBMIT', path)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run preprocess.chem_ner as a collection of cluster jobs')
@@ -154,8 +157,9 @@ if __name__ == '__main__':
     parser.add_argument('--submit',
                         help='Submit jobs after creating job files',
                         action='store_true')
-    parser.add_argument('--njobs',
-                        help='Number of PBS jobs to create',
+    parser.add_argument('--nfiles',
+                        help='Number of files per PBS job',
+                        type=int,
                         default=500)
     parser.add_argument('--poolsize',
                         help='Size of multiprocessing process pool',
