@@ -32,7 +32,8 @@ def create_job_file(job_dir, sublist_dir, output_directory, chunk_num, args):
                  'job_log_directory': job_log_directory,
                  'poolsize': args.poolsize,
                  'walltime_hours': 240,
-                 'cputime_hours': args.poolsize*240
+                 'cputime_hours': args.poolsize*240,
+                 'memgb': args.memgb
                  }
 
     pbs_jobfile = textwrap.dedent('''
@@ -41,7 +42,7 @@ def create_job_file(job_dir, sublist_dir, output_directory, chunk_num, args):
         #PBS -l cput=960:00:00
         #PBS -l walltime={walltime_hours}:00:00
         #PBS -j oe
-        #PBS -l mem=60gb
+        #PBS -l mem={memgb}gb
         #PBS -N "tmchem_{chunk_num}"
         #PBS -o tmchem_chunk{chunk_num}.out
         #PBS -m n
@@ -160,5 +161,9 @@ if __name__ == '__main__':
                         help='Size of multiprocessing process pool',
                         type=int,
                         default=8)
+    parser.add_argument('--memgb',
+                        help='Amount of RAM to allocate per PBS job (GB)',
+                        type=int,
+                        default=47)
     args = parser.parse_args()
     main(args)
