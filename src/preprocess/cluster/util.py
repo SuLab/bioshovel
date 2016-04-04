@@ -1,4 +1,5 @@
 import subprocess
+import sys
 from pathlib import Path
 
 def submit_pbs_job(job_file_path, queue='new'):
