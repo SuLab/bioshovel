@@ -102,7 +102,25 @@ def main(args):
 
     # get all files (recursive)
     print('Organizing input files and submitting jobs...')
-    all_files = (str(f) for f in tqdm(Path(args.paragraph_path).glob('**/*')) if f.is_file())
+    if args.resume:
+        # filter out filenames that are already done...
+        args.resume = os.path.abspath(args.resume)
+        file_exists_or_exit(args.resume)
+        print('Resuming job submission from path: {}'.format(args.resume))
+
+        if os.path.exists(args.output_directory):
+            print('Output directory changed to avoid file conflicts:'
+            print('OLD: '+args.output_directory)
+            args.output_directory += '_resume'
+            print('NEW: '+args.output_directory)
+
+        print('Reading previously completed files...')
+        # this set may use a lot of RAM if args.resume path contains a ton of files...
+        done_files = set(p.name.rstrip('.tmChem') for p in tqdm(Path(args.resume).glob('**/*')) if p.is_file())
+
+        all_files = (str(f) for f in tqdm(Path(args.paragraph_path).glob('**/*')) if f.is_file() and f.name not in done_files)
+    else:
+        all_files = (str(f) for f in tqdm(Path(args.paragraph_path).glob('**/*')) if f.is_file())
 
     # divide list into chunks of size n
     filelist_with_sublists = create_sublists_sized_n(all_files, args.nfiles)
@@ -169,5 +187,8 @@ if __name__ == '__main__':
                         help='Amount of RAM to allocate per PBS job (GB)',
                         type=int,
                         default=47)
+    parser.add_argument('--resume',
+                        help='Resume job submission based on a previous output directory',
+                        type=str)
     args = parser.parse_args()
     main(args)
