@@ -75,22 +75,3 @@ general utility/helper functions for file handling, logging, etc.
 
 **`setup/setup_tmchem.sh`**
 bash script for setting up [tmChem](http://dx.doi.org/10.1186/1758-2946-7-S1-S3) locally
-
-`tests/`
----
-*unit tests for `preprocess` package*
-
-**`preprocess.tests.elife_sample_article`**
-a sample eLife XML article that is used for eLife parser unit tests
-
-**`preprocess.tests.medline_sample_xml`**
-a sample MEDLINE XML abstract that is used for MEDLINE parser unit tests
-
-**`preprocess.tests.test_elife_preprocess`**
-unit tests for eLife XML parser functions
-
-**`preprocess.tests.test_medline_preprocess`**
-unit tests for MEDLINE XML parser functions
-
-**`preprocess.tests.test_ner`**
-unit tests for various `preprocess` functions, including `preprocess.util`
