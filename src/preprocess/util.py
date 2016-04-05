@@ -5,8 +5,12 @@
 import itertools
 import logging
 import os
+import shutil
 import subprocess
 import sys
+from glob import iglob
+from pathlib import Path
+from tqdm import tqdm
 
 def save_file(file_name, file_info, directory):
 
@@ -87,3 +91,31 @@ def ensure_path_exists(path):
 
     if not os.path.isdir(path):
         os.makedirs(path)
+
+def reorganize_directory(file_path, max_files_per_subdir=1000, quiet=True):
+
+    ''' Reorganize a single directory with no subdirectories and a large number
+        of files into a number of subdirectories containing those files, with
+        no more than max_files_per_subdir files per subdirectory
+    '''
+
+    # count files using generator and sum in case the directory has a massive
+    # number of files...
+    total_files_in_dir = sum(1 for file_path in iglob(os.path.join(file_path,'*')))
+
+    if total_files_in_dir > max_files_per_subdir:
+        if not quiet:
+            print('Reorganizing output files into batches of {}...'.format(max_files_per_subdir))
+        for file_num, file_path in enumerate(tqdm(iglob(os.path.join(file_path,'*')),
+                                                  total=total_files_in_dir,
+                                                  disable=quiet)):
+            if file_num % max_files_per_subdir == 0:
+                # every n files, create new subdirectory and update current_subdir
+                subdir_name = '{0:0>4}'.format(file_num//max_files_per_subdir)
+                path = Path(file_path)
+                new_dir = path.parent / subdir_name
+                new_dir.mkdir()
+                current_subdir = str(new_dir)
+            shutil.move(file_path, current_subdir)
+        if not quiet:
+            print('Done reorganizing files into subdirectories')

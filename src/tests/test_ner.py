@@ -13,6 +13,7 @@ import tempfile
 import textwrap
 import unittest
 from io import StringIO
+from pathlib import Path
 from queue import Queue
 
 from preprocess import (chem_ner,
@@ -106,6 +107,27 @@ class UtilTestCase(unittest.TestCase):
             new_dir = os.path.join(tmpdirname, 'new_directory')
             util.ensure_path_exists(new_dir)
             self.assertTrue(os.path.isdir(new_dir))
+
+    def test_reorganize_directory_works_properly(self):
+
+        ''' reorganize_directory() should take an input directory with a number
+            of subfiles and create subdirectories+move files such that no
+            subdirectory has > max_files_per_subdir files
+        '''
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            for i in range(10):
+                with open(os.path.join(tmpdirname, 'test{}'.format(i)), 'w') as f:
+                    pass
+            util.reorganize_directory(tmpdirname,
+                                      max_files_per_subdir=2,
+                                      quiet=True)
+            tmppath = Path(tmpdirname)
+            subfiles = list(tmppath.glob('**/*'))
+            num_dirs = len([f for f in subfiles if f.is_dir()])
+            num_files = len([f for f in subfiles if f.is_file()])
+            self.assertEqual(num_dirs, 5)
+            self.assertEqual(num_files, 10)
 
 class ReformatTestCase(unittest.TestCase):
 

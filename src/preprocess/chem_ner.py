@@ -29,7 +29,8 @@ from tqdm import tqdm
 from preprocess.util import (save_file,
                              create_n_sublists,
                              logging_thread,
-                             file_exists_or_exit)
+                             file_exists_or_exit,
+                             reorganize_directory)
 from preprocess.reformat import (parse_parform_file, 
                                  parform_to_pubtator)
 
@@ -128,22 +129,12 @@ def main(args):
 
     logging.info('Done processing {} files'.format(len(all_files)))
 
-    max_files_per_directory = 10000
-    if len(all_files) > max_files_per_directory:
-        print('Reorganizing output files into batches of {}...'.format(max_files_per_directory))
-        for file_num, file_path in enumerate(tqdm(iglob(os.path.join(args.output_directory,
-                                                                     '*')),
-                                                  total=len(all_files),
-                                                  disable=args.notqdm)):
-            if file_num % max_files_per_directory == 0:
-                # every n files, create new subdirectory and update current_subdir
-                subdir_name = '{0:0>4}'.format(file_num//max_files_per_directory)
-                path = Path(file_path)
-                new_dir = path.parent / subdir_name
-                new_dir.mkdir()
-                current_subdir = str(new_dir)
-            shutil.move(file_path, current_subdir)
-        logging.info('Done reorganizing files into subdirectories')
+    # reorganize a directory with a huge number of files into a bunch of
+    # subdirectories containing those same files, with a max of 10k files per
+    # subdirectory
+    reorganize_directory(args.output_directory,
+                         max_files_per_subdir=10000,
+                         quiet=args.notqdm)
     
     # end logging_thread
     q.put(None)
