@@ -32,7 +32,8 @@ from tqdm import tqdm
 from preprocess.util import (save_file,
                              create_n_sublists,
                              logging_thread,
-                             file_exists_or_exit)
+                             file_exists_or_exit,
+                             reorganize_directory)
 from preprocess.reformat import (parse_parform_file, 
                                  parform_to_pubtator)
 
@@ -129,8 +130,8 @@ def main(args):
     ram_gb = psutil.virtual_memory().total//1024**3
     num_java_processes = ram_gb//10
 
-    # don't start more processes than CPU cores
-    num_java_processes = min(num_java_processes, mp.cpu_count())
+    # don't start more processes than CPU cores (or cores allocated for job)
+    num_java_processes = min(num_java_processes, args.poolsize)
 
     print('Using {} cores to process {} files...'.format(num_java_processes, 
                                                          len(all_files)))
@@ -143,13 +144,22 @@ def main(args):
         log_thread = threading.Thread(target=logging_thread, args=(q,))
         log_thread.start()
         imap_gen = pool.imap_unordered(process_and_run_chunk, 
-                                        zip(filelist_with_sublists, 
-                                            repeat(args),
-                                            repeat(q)))
-        for i in tqdm(imap_gen, total=len(filelist_with_sublists)):
+                                       zip(filelist_with_sublists, 
+                                           repeat(args),
+                                           repeat(q)))
+        for i in tqdm(imap_gen,
+                      total=len(filelist_with_sublists),
+                      disable=args.notqdm):
             pass
 
     logging.info('Done processing {} files'.format(len(all_files)))
+
+    # reorganize a directory with a huge number of files into a bunch of
+    # subdirectories containing those same files, with a max of 10k files per
+    # subdirectory
+    reorganize_directory(args.output_directory,
+                         max_files_per_subdir=10000,
+                         quiet=args.notqdm)
     
     # end logging_thread
     q.put(None)
@@ -158,9 +168,21 @@ def main(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Run DNorm on a directory of paragraph files')
-    parser.add_argument('paragraph_path', help='Directory of parsed paragraph files')
-    parser.add_argument('output_directory', help='Final output directory')
-    parser.add_argument('--dnorm', help='Directory (absolute path) where ApplyDNorm.sh is located', default=os.getcwd())
-    parser.add_argument('--logdir', help='Directory where logfile should be stored', default='../logs')
+    parser.add_argument('paragraph_path',
+                        help='Directory of parsed paragraph files')
+    parser.add_argument('output_directory',
+                        help='Final output directory')
+    parser.add_argument('--dnorm',
+                        help='Directory (absolute path) where ApplyDNorm.sh is located',
+                        default=os.getcwd())
+    parser.add_argument('--logdir',
+                        help='Directory where logfile should be stored',
+                        default='../logs')
+    parser.add_argument('--poolsize',
+                        help='Size of multiprocessing process pool',
+                        type=int,
+                        default=mp.cpu_count())
+    parser.add_argument('--notqdm', help='Disable tqdm progress bar output',
+                        action='store_true')
     args = parser.parse_args()
     main(args)
