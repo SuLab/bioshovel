@@ -119,3 +119,20 @@ def reorganize_directory(file_path, max_files_per_subdir=1000, quiet=True):
             shutil.move(file_path, current_subdir)
         if not quiet:
             print('Done reorganizing files into subdirectories')
+
+def create_sublist_symlinks(sublist, input_dir, max_files=1000):
+
+    ''' Given an input directory input_dir and a list of absolute file paths 
+        sublist, create symlinks for all files in sublist in input_dir, with no
+        more than max_files files per subdirectory of input_dir
+    '''
+
+    for file_num, file_path in enumerate(sublist):
+        if not file_path:
+            continue
+        if file_num % max_files == 0:
+            subdir_name = '{0:0>4}'.format(file_num//max_files)
+            current_subdir = os.path.join(input_dir, subdir_name)
+            ensure_path_exists(current_subdir)
+
+        subprocess.check_call(['ln', '-s', file_path, '.'], cwd=current_subdir)

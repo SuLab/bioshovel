@@ -12,6 +12,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 from preprocess.util import (create_sublists_sized_n,
+                             create_sublist_symlinks,
                              ensure_path_exists,
                              file_exists_or_exit)
 
@@ -71,23 +72,6 @@ def create_job_file(job_dir, sublist_dir, output_directory, chunk_num, args):
         f.write(pbs_jobfile)
 
     return job_file_path
-
-def create_sublist_symlinks(sublist, input_dir, max_files):
-
-    ''' Given an input directory input_dir and a list of absolute file paths 
-        sublist, create symlinks for all files in sublist in input_dir, with no
-        more than max_files files per subdirectory of input_dir
-    '''
-
-    for file_num, file_path in enumerate(sublist):
-        if not file_path:
-            continue
-        if file_num % max_files == 0:
-            subdir_name = '{0:0>4}'.format(file_num//max_files)
-            current_subdir = os.path.join(input_dir, subdir_name)
-            ensure_path_exists(current_subdir)
-
-        subprocess.check_call(['ln', '-s', file_path, '.'], cwd=current_subdir)
 
 def main(args):
 
