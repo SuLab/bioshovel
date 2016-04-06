@@ -129,6 +129,23 @@ class UtilTestCase(unittest.TestCase):
             self.assertEqual(num_dirs, 5)
             self.assertEqual(num_files, 10)
 
+    def test_calc_dnorm_num_processes(self):
+
+        ''' test that the number of processes is returned correctly, given
+            appropriate inputs
+        '''
+
+        # Given a machine with 16 CPU cores and 80GB RAM, only 8 DNorm
+        # processes should be launched (10GB per process)
+        self.assertEqual(util.calc_dnorm_num_processes(num_cores=16, ram_gb=80),
+                         8)
+
+        # Given a machine with 16 CPU cores and 200GB RAM, 16 DNorm
+        # processes should be launched (> 10GB per process available)
+        self.assertEqual(util.calc_dnorm_num_processes(num_cores=16, ram_gb=200),
+                         16)
+
+
 class ReformatTestCase(unittest.TestCase):
 
     def setUp(self):

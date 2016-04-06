@@ -19,7 +19,6 @@ import argparse
 import logging
 import logging.handlers
 import os
-import psutil
 import subprocess
 import sys
 import tempfile
@@ -30,11 +29,12 @@ import multiprocessing as mp
 from tqdm import tqdm
 
 from preprocess.util import (save_file,
+                             calc_dnorm_num_processes,
                              create_n_sublists,
                              logging_thread,
                              file_exists_or_exit,
                              reorganize_directory)
-from preprocess.reformat import (parse_parform_file, 
+from preprocess.reformat import (parse_parform_file,
                                  parform_to_pubtator)
 
 def process_and_run_chunk(filepaths_args_tuple):
@@ -126,17 +126,14 @@ def main(args):
                         level=logging.INFO,
                         filemode='w')
 
-    # each java process requires 10G of RAM. How many can we start?
-    ram_gb = psutil.virtual_memory().total//1024**3
-    num_java_processes = ram_gb//10
-
-    # don't start more processes than CPU cores (or cores allocated for job)
-    num_java_processes = min(num_java_processes, args.poolsize)
+    # calculate how many Java/DNorm processes to start, given available RAM
+    # (DNorm requires 10GB RAM per process)
+    num_java_processes = calc_dnorm_num_processes(num_cores=args.poolsize,
+                                                  ram_gb=None)
 
     print('Using {} cores to process {} files...'.format(num_java_processes, 
                                                          len(all_files)))
-    print('Using {} GB of {} GB total RAM'.format(num_java_processes*10,
-                                                  ram_gb))
+    print('Allocating {} GB RAM'.format(num_java_processes*10))
 
     with mp.Pool(num_java_processes) as pool:
         mgr = mp.Manager()

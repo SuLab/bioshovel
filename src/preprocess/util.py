@@ -4,7 +4,9 @@
 
 import itertools
 import logging
+import multiprocessing as mp
 import os
+import psutil
 import shutil
 import subprocess
 import sys
@@ -136,3 +138,18 @@ def create_sublist_symlinks(sublist, input_dir, max_files=1000):
             ensure_path_exists(current_subdir)
 
         subprocess.check_call(['ln', '-s', file_path, '.'], cwd=current_subdir)
+
+def calc_dnorm_num_processes(num_cores=mp.cpu_count(), ram_gb=None):
+
+    ''' Each DNorm (Disease NER) Java process requires 10GB of RAM
+
+        How many can we start, given the number of cores and amount of RAM (in
+        GB) available?
+    '''
+
+    if not ram_gb:
+        ram_gb = psutil.virtual_memory().total//1024**3
+
+    num_java_processes = ram_gb//10
+    
+    return min(num_java_processes, num_cores)
