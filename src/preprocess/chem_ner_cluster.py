@@ -60,7 +60,7 @@ def create_job_file(job_dir, sublist_dir, output_directory, chunk_num, args):
 
         STATUS=$?
         if [ $STATUS -ne 0 ]; then
-          echo "CoreNLP failed"; exit $STATUS
+          echo "Chem NER (tmChem) failed"; exit $STATUS
         else
           echo "Finished successfully!"
         fi
