@@ -93,7 +93,7 @@ def main(args):
         print('Resuming job submission from path: {}'.format(args.resume))
 
         if os.path.exists(args.output_directory):
-            print('Output directory changed to avoid file conflicts:'
+            print('Output directory changed to avoid file conflicts:')
             print('OLD: '+args.output_directory)
             args.output_directory += '_resume'
             print('NEW: '+args.output_directory)
