@@ -12,7 +12,8 @@ import textwrap
 from pathlib import Path
 from tqdm import tqdm
 
-from preprocess.util import (create_sublists_sized_n,
+from preprocess.util import (calc_dnorm_num_processes,
+                             create_sublists_sized_n,
                              create_sublist_symlinks,
                              ensure_path_exists,
                              file_exists_or_exit)
