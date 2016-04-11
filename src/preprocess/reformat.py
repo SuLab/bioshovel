@@ -143,3 +143,31 @@ def parform_to_plaintext(title_line, body,
         new_file_lines = new_file_lines_with_newlines
 
     return [line+'\n' for line in new_file_lines]
+
+def pubtator_to_plaintext(title_line, abstract_text, newlines=False):
+
+    ''' Converts a single PubTator title_line+abstract_text pair to two strings
+        without PMID or label information. For example:
+
+        Input:
+        title_line: string in pubtator format with title, e.g., 
+        '3513765|t|Protein kinase C desensitization by phorbol esters and its impact on growth of human breast cancer cells.'
+
+        abstract_text: string in pubtator format with abstract, e.g.,
+        '3513765|a|Active phorbol esters such as TPA (12-0-tetra-decanoylphorbol-13-acetate) inhibited growth of mammary carcinoma cells (MCF-7 greater than BT-20 greater than MDA-MB-231 greater than = ZR-75-1 greater than HBL-100) with the exception of T-47-D cells presumably by interacting with the phospholipid/Ca2+-dependent protein kinase (PKC). The nonresponsive T-47-D cells exhibited the lowest PKC activity. A rapid (30 min) TPA-dependent translocation of cytosolic PKC to membranes was found in the five TPA-sensitive cell without affecting cell growth. However, TPA-treatment of more than 10 hours inhibited reversibly the growth of TPA-responsive cells. This effect coincided with the complete loss of cellular PKC activity due to the proteolysis of the translocated membrane-bound PKC holoenzyme (75K) into 60K and 50K PKC fragments. Resumption of cell growth after TPA-removal was closely related to the specific reappearance of the PKC holoenzyme activity (75K) in the TPA-responsive human mammary tumor cell lines suggesting an involvement of PKC in growth regulation.'
+
+        Output:
+        ['Protein kinase C desensitization by phorbol esters and its impact on growth of human breast cancer cells.',
+         'Active phorbol esters such as TPA (12-0-tetra-decanoylphorbol-13-acetate) inhibited growth of mammary carcinoma cells (MCF-7 greater than BT-20 greater than MDA-MB-231 greater than = ZR-75-1 greater than HBL-100) with the exception of T-47-D cells presumably by interacting with the phospholipid/Ca2+-dependent protein kinase (PKC). The nonresponsive T-47-D cells exhibited the lowest PKC activity. A rapid (30 min) TPA-dependent translocation of cytosolic PKC to membranes was found in the five TPA-sensitive cell without affecting cell growth. However, TPA-treatment of more than 10 hours inhibited reversibly the growth of TPA-responsive cells. This effect coincided with the complete loss of cellular PKC activity due to the proteolysis of the translocated membrane-bound PKC holoenzyme (75K) into 60K and 50K PKC fragments. Resumption of cell growth after TPA-removal was closely related to the specific reappearance of the PKC holoenzyme activity (75K) in the TPA-responsive human mammary tumor cell lines suggesting an involvement of PKC in growth regulation.'
+         ]
+    '''
+
+    plaintext = []
+    for item in title_line, abstract_text:
+        # correctly handle titles/abstracts with internal | character
+        stripped_line = '|'.join(item.split('|')[2:])
+        if newlines:
+            stripped_line += '\n'
+        plaintext.append(stripped_line)
+
+    return plaintext
