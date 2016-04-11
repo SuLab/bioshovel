@@ -137,3 +137,23 @@ class UtilTestCase(unittest.TestCase):
         # processes should be launched (> 10GB per process available)
         self.assertEqual(util.calc_dnorm_num_processes(num_cores=16, ram_gb=200),
                          16)
+
+    def test_get_file_lines_set(self):
+
+        data = ['12345', '23456', '34567']
+
+        # test getting file lines as set of strings
+        with tempfile.NamedTemporaryFile() as f:
+            str_data = '\n'.join(data)+'\n'
+            f.write(str_data.encode('utf-8'))
+            f.seek(0)
+            result = util.get_file_lines_set(f.name)
+            self.assertEqual(set(data), result)
+
+        # test getting file lines as set of ints
+        with tempfile.NamedTemporaryFile() as f:
+            str_data = '\n'.join(data)+'\n'
+            f.write(str_data.encode('utf-8'))
+            f.seek(0)
+            result = util.get_file_lines_set(f.name, typecast=int)
+            self.assertEqual(set(int(d) for d in data), result)

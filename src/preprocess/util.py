@@ -151,5 +151,19 @@ def calc_dnorm_num_processes(num_cores=mp.cpu_count(), ram_gb=None):
         ram_gb = psutil.virtual_memory().total//1024**3
 
     num_java_processes = ram_gb//10
-    
+
     return min(num_java_processes, num_cores)
+
+def get_file_lines_set(file_path_str, typecast=None):
+
+    ''' Return a set consisting of the lines of an input file at file_path_str,
+        with trailing newline characters stripped
+
+        typecast argument can be int, str, float, etc.
+    '''
+
+    if not typecast:
+        typecast = str
+
+    with open(file_path_str) as f:
+        return set(typecast(line.rstrip('\n')) for line in f.readlines())
