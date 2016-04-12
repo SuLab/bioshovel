@@ -28,6 +28,8 @@ from preprocess.util import (create_n_sublists,
 from preprocess.reformat import (parform_to_plaintext,
                                  parse_parform_file)
 
+from preprocess.cluster.util import submit_pbs_job
+
 def create_job_file(input_files, job_dir, output_dir, chunk_num, args):
 
     ''' Creates a PBS job file in args.output_directory for the given
@@ -48,8 +50,8 @@ def create_job_file(input_files, job_dir, output_dir, chunk_num, args):
     pbs_jobfile = textwrap.dedent('''
         #!/bin/bash
         #PBS -l nodes=1:ppn=8
-        #PBS -l cput=192:00:00
-        #PBS -l walltime=24:00:00
+        #PBS -l cput=384:00:00
+        #PBS -l walltime=48:00:00
         #PBS -j oe
         #PBS -l mem=8gb
         #PBS -N "corenlp_{chunk_num}"
@@ -124,9 +126,12 @@ def main(args):
     all_files = glob(os.path.join(args.paragraph_path, '*'))
     number_of_chunks = len(all_files)//100
     filelist_with_sublists = create_n_sublists(all_files, number_of_chunks)
-    job_file_paths = []
+    jobs_submitted_success = 0
+    job_file_paths_failed = []
     print('Creating {} input files in {} groups with matched job files...'.format(len(all_files),
                                                                                   number_of_chunks))
+    if args.submit:
+        print('and submitting jobs to queue \'{}\'...'.format(args.queue))
     for chunk_num, subfilelist in enumerate(tqdm(filelist_with_sublists)):
         new_input_files = create_corenlp_input_files(subfilelist, input_dir)
         new_job_file_path = create_job_file(new_input_files,
@@ -134,26 +139,19 @@ def main(args):
                                             output_dir,
                                             chunk_num,
                                             args)
-        job_file_paths.append(new_job_file_path)
+        if args.submit:
+            result = submit_pbs_job(new_job_file_path, queue=args.queue)
+            if result:
+                jobs_submitted_success += 1
+            else:
+                job_file_paths_failed.append(new_job_file_path)
 
     print('Created {} PBS job files in {}'.format(len(job_file_paths), job_dir))
 
-    if args.submit:
-        print('Submitting jobs to queue \'{}\'...'.format(args.queue))
-
-        job_ids = []
-        for job_file in tqdm(job_file_paths):
-            try:
-                out = subprocess.check_output(['qsub', '-q',
-                                               args.queue,
-                                               job_file],
-                                              cwd=job_dir)
-                job_ids.append(out.decode('utf-8').rstrip('\n').split('.')[0])
-            except subprocess.CalledProcessError as err:
-                string_error = err.output.decode(encoding='UTF-8').rstrip('\n')
-                print(string_error, file=sys.stderr)
-
-        print('Submitted {} jobs to queue {}'.format(len(job_ids), args.queue))
+    print('Successfully submitted {} jobs with {} failed submissions'.format(jobs_submitted_success,
+                                                                             len(job_file_paths_failed)))
+    for path in job_file_paths_failed:
+        print('FAILED TO SUBMIT', path)
 
 
 if __name__ == '__main__':
