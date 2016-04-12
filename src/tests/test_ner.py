@@ -148,6 +148,21 @@ class ParformToPlaintextTests(ReformatTestCase):
         correct_title_line_with_period = self.correct_title_line + '.'
         self.assertEqual(title_line[-50:], correct_title_line_with_period[-50:])
 
+    def test_parform_to_plaintext_reformat_does_not_add_period_after_title_ending_in_period(self):
+
+        ''' if period_following_title kwarg is True, the returned title line 
+            should have a period after it -- UNLESS the title already ends with
+            a period (in that case, leave it as-is)
+        '''
+
+        plaintext_file_lines = reformat.parform_to_plaintext(self.title_line+'.',
+                                                             self.body,
+                                                             period_following_title=True)
+
+        title_line = plaintext_file_lines[0].rstrip('\n')
+        correct_title_line_with_period = self.correct_title_line + '.'
+        self.assertEqual(title_line[-50:], correct_title_line_with_period[-50:])
+
     def test_parform_to_plaintext_reformat_adds_newlines_correctly(self):
 
         ''' if newlines kwarg is True, each line of the output should have an empty
@@ -161,25 +176,30 @@ class ParformToPlaintextTests(ReformatTestCase):
         staggered_newlines_present = all([line=='\n' for line in even_numbered_lines])
         self.assertTrue(staggered_newlines_present)
 
-class PubtatorToPlaintextTests(ReformatTestCase):
+class PubtatorInputTests(ReformatTestCase):
 
-    ''' Some tests for the reformat.pubtator_to_plaintext function
+    ''' Some tests for functions:
+        reformat.pubtator_to_plaintext
+        reformat.pubtator_to_parform
     '''
 
     def setUp(self):
         super().setUp()
         self.pubtator_title = '3513765|t|Protein kinase C desensitization by phorbol esters and its impact on growth of human breast cancer cells.'
         self.pubtator_abstract = '3513765|a|Active phorbol esters such as TPA (12-0-tetra-decanoylphorbol-13-acetate) inhibited growth of mammary carcinoma cells (MCF-7 greater than BT-20 greater than MDA-MB-231 greater than = ZR-75-1 greater than HBL-100) with the exception of T-47-D cells presumably by interacting with the phospholipid/Ca2+-dependent protein kinase (PKC). The nonresponsive T-47-D cells exhibited the lowest PKC activity. A rapid (30 min) TPA-dependent translocation of cytosolic PKC to membranes was found in the five TPA-sensitive cell without affecting cell growth. However, TPA-treatment of more than 10 hours inhibited reversibly the growth of TPA-responsive cells. This effect coincided with the complete loss of cellular PKC activity due to the proteolysis of the translocated membrane-bound PKC holoenzyme (75K) into 60K and 50K PKC fragments. Resumption of cell growth after TPA-removal was closely related to the specific reappearance of the PKC holoenzyme activity (75K) in the TPA-responsive human mammary tumor cell lines suggesting an involvement of PKC in growth regulation.'
-        self.correct_title = 'Protein kinase C desensitization by phorbol esters and its impact on growth of human breast cancer cells.'
-        self.correct_abstract = 'Active phorbol esters such as TPA (12-0-tetra-decanoylphorbol-13-acetate) inhibited growth of mammary carcinoma cells (MCF-7 greater than BT-20 greater than MDA-MB-231 greater than = ZR-75-1 greater than HBL-100) with the exception of T-47-D cells presumably by interacting with the phospholipid/Ca2+-dependent protein kinase (PKC). The nonresponsive T-47-D cells exhibited the lowest PKC activity. A rapid (30 min) TPA-dependent translocation of cytosolic PKC to membranes was found in the five TPA-sensitive cell without affecting cell growth. However, TPA-treatment of more than 10 hours inhibited reversibly the growth of TPA-responsive cells. This effect coincided with the complete loss of cellular PKC activity due to the proteolysis of the translocated membrane-bound PKC holoenzyme (75K) into 60K and 50K PKC fragments. Resumption of cell growth after TPA-removal was closely related to the specific reappearance of the PKC holoenzyme activity (75K) in the TPA-responsive human mammary tumor cell lines suggesting an involvement of PKC in growth regulation.'
+        self.stripped_title = 'Protein kinase C desensitization by phorbol esters and its impact on growth of human breast cancer cells.'
+        self.stripped_abstract = 'Active phorbol esters such as TPA (12-0-tetra-decanoylphorbol-13-acetate) inhibited growth of mammary carcinoma cells (MCF-7 greater than BT-20 greater than MDA-MB-231 greater than = ZR-75-1 greater than HBL-100) with the exception of T-47-D cells presumably by interacting with the phospholipid/Ca2+-dependent protein kinase (PKC). The nonresponsive T-47-D cells exhibited the lowest PKC activity. A rapid (30 min) TPA-dependent translocation of cytosolic PKC to membranes was found in the five TPA-sensitive cell without affecting cell growth. However, TPA-treatment of more than 10 hours inhibited reversibly the growth of TPA-responsive cells. This effect coincided with the complete loss of cellular PKC activity due to the proteolysis of the translocated membrane-bound PKC holoenzyme (75K) into 60K and 50K PKC fragments. Resumption of cell growth after TPA-removal was closely related to the specific reappearance of the PKC holoenzyme activity (75K) in the TPA-responsive human mammary tumor cell lines suggesting an involvement of PKC in growth regulation.'
+        self.abstract_id = '3513765'
+        self.parform_title = 'title\tProtein kinase C desensitization by phorbol esters and its impact on growth of human breast cancer cells.'
+        self.parform_abstract = 'abs\tActive phorbol esters such as TPA (12-0-tetra-decanoylphorbol-13-acetate) inhibited growth of mammary carcinoma cells (MCF-7 greater than BT-20 greater than MDA-MB-231 greater than = ZR-75-1 greater than HBL-100) with the exception of T-47-D cells presumably by interacting with the phospholipid/Ca2+-dependent protein kinase (PKC). The nonresponsive T-47-D cells exhibited the lowest PKC activity. A rapid (30 min) TPA-dependent translocation of cytosolic PKC to membranes was found in the five TPA-sensitive cell without affecting cell growth. However, TPA-treatment of more than 10 hours inhibited reversibly the growth of TPA-responsive cells. This effect coincided with the complete loss of cellular PKC activity due to the proteolysis of the translocated membrane-bound PKC holoenzyme (75K) into 60K and 50K PKC fragments. Resumption of cell growth after TPA-removal was closely related to the specific reappearance of the PKC holoenzyme activity (75K) in the TPA-responsive human mammary tumor cell lines suggesting an involvement of PKC in growth regulation.'
 
     def test_pubtator_to_plaintext_parses_record(self):
 
         plaintext_file_lines = reformat.pubtator_to_plaintext(self.pubtator_title,
                                                               self.pubtator_abstract)
-        self.assertEqual(plaintext_file_lines[0][:25], self.correct_title[:25])
-        self.assertEqual(plaintext_file_lines[1][:25], self.correct_abstract[:25])
-        self.assertEqual(plaintext_file_lines[1][-25:], self.correct_abstract[-25:])
+        self.assertEqual(plaintext_file_lines[0][:25], self.stripped_title[:25])
+        self.assertEqual(plaintext_file_lines[1][:25], self.stripped_abstract[:25])
+        self.assertEqual(plaintext_file_lines[1][-25:], self.stripped_abstract[-25:])
 
     def test_pubtator_to_plaintext_adds_newlines_correctly(self):
 
@@ -192,3 +212,22 @@ class PubtatorToPlaintextTests(ReformatTestCase):
                                                               newlines=True)
         self.assertTrue(plaintext_file_lines[0].endswith('\n'))
         self.assertTrue(plaintext_file_lines[1].endswith('\n'))
+
+    def test_pubtator_to_parform_parses_record(self):
+
+        parform_output = reformat.pubtator_to_parform(self.pubtator_title,
+                                                      self.pubtator_abstract)
+        abs_id, (title, abstract) = parform_output
+        self.assertEqual(abs_id, self.abstract_id)
+        self.assertEqual(title[:25], self.parform_title[:25])
+        self.assertEqual(abstract[:25], self.parform_abstract[:25])
+
+    def test_pubtator_to_parform_adds_newlines_correctly(self):
+
+        parform_output = reformat.pubtator_to_parform(self.pubtator_title,
+                                                      self.pubtator_abstract,
+                                                      newlines=True)
+        abs_id, (title, abstract) = parform_output
+
+        self.assertTrue(title.endswith('\n'))
+        self.assertTrue(abstract.endswith('\n'))

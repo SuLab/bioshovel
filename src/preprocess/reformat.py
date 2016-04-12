@@ -124,7 +124,7 @@ def parform_to_plaintext(title_line, body,
     body = [line.replace('|', '') for line in body]
 
     article_title = title_line.split('\t')[1]
-    if period_following_title:
+    if period_following_title and not article_title.endswith('.'):
         article_title += '.' # to help CoreNLP split title from paragraph 1
 
     regex = re.compile(r'(^\w+\t)')
@@ -171,3 +171,37 @@ def pubtator_to_plaintext(title_line, abstract_text, newlines=False):
         plaintext.append(stripped_line)
 
     return plaintext
+
+def pubtator_to_parform(title_line, abstract_text, newlines=False):
+
+    ''' Converts a *single* PubTator title_line+abstract_text pair to two strings
+        without PMID or label information. For example:
+
+        Input:
+        title_line: string in pubtator format with title, e.g., 
+        '3513765|t|Protein kinase C desensitization by phorbol esters and its impact on growth of human breast cancer cells.'
+
+        abstract_text: string in pubtator format with abstract, e.g.,
+        '3513765|a|Active phorbol esters such as TPA (12-0-tetra-decanoylphorbol-13-acetate) inhibited growth of mammary carcinoma cells (MCF-7 greater than BT-20 greater than MDA-MB-231 greater than = ZR-75-1 greater than HBL-100) with the exception of T-47-D cells presumably by interacting with the phospholipid/Ca2+-dependent protein kinase (PKC). The nonresponsive T-47-D cells exhibited the lowest PKC activity. A rapid (30 min) TPA-dependent translocation of cytosolic PKC to membranes was found in the five TPA-sensitive cell without affecting cell growth. However, TPA-treatment of more than 10 hours inhibited reversibly the growth of TPA-responsive cells. This effect coincided with the complete loss of cellular PKC activity due to the proteolysis of the translocated membrane-bound PKC holoenzyme (75K) into 60K and 50K PKC fragments. Resumption of cell growth after TPA-removal was closely related to the specific reappearance of the PKC holoenzyme activity (75K) in the TPA-responsive human mammary tumor cell lines suggesting an involvement of PKC in growth regulation.'
+
+        Output:
+        a 2-item tuple: (abs_id, (title_line, abstract))
+
+        abs_id is a string, e.g., '3513765'
+
+        title_line is a string:
+        'title\tsome_title_text'
+
+        abstract is a string:
+        'abs\tsome_abstract_text'
+    '''
+
+    abs_id = title_line.split('|')[0]
+    parform_title = 'title\t'+'|'.join(title_line.split('|')[2:])
+    parform_abs = 'abs\t'+'|'.join(abstract_text.split('|')[2:])
+
+    if newlines:
+        parform_title += '\n'
+        parform_abs += '\n'
+
+    return (abs_id, (parform_title, parform_abs))
