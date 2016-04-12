@@ -136,10 +136,8 @@ def parform_to_plaintext(title_line, body,
     if newlines:
         new_file_lines_with_newlines = []
         for i, line in enumerate(new_file_lines):
-            if i%2 == 0:
-                new_file_lines_with_newlines.append(line)
-            else:
-                new_file_lines_with_newlines.append('')
+            new_file_lines_with_newlines.append(line)
+            new_file_lines_with_newlines.append('')
         new_file_lines = new_file_lines_with_newlines
 
     return [line+'\n' for line in new_file_lines]

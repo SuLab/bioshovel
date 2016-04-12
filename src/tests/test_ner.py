@@ -176,6 +176,24 @@ class ParformToPlaintextTests(ReformatTestCase):
         staggered_newlines_present = all([line=='\n' for line in even_numbered_lines])
         self.assertTrue(staggered_newlines_present)
 
+    def test_parform_to_plaintext_reformat_with_newlines_still_has_all_lines(self):
+
+        ''' if newlines kwarg is True, make sure all data lines are still there
+        '''
+
+        plaintext_file_lines = reformat.parform_to_plaintext(self.title_line,
+                                                             self.body,
+                                                             newlines=True)
+        odd_numbered_lines = plaintext_file_lines[::2]
+        title_line = odd_numbered_lines[0].rstrip('\n')
+        abstract_line = odd_numbered_lines[1].rstrip('\n')
+        last_paragraph_line = odd_numbered_lines[-1].rstrip('\n')
+
+        self.assertEqual(title_line[:25], self.correct_title_line[:25])
+        self.assertEqual(abstract_line[:25], self.correct_first_paragraph_line[:25])
+        self.assertEqual(last_paragraph_line[:25], self.correct_last_paragraph_line[:25])
+
+
 class PubtatorInputTests(ReformatTestCase):
 
     ''' Some tests for functions:
