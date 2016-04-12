@@ -24,6 +24,12 @@ All modules can be run from the **`src`** directory using **`python3 -m preproce
 
 * Run using `python3 -m preprocess.create_medline_subset -h` to see help/options
 
+**`preprocess.create_pubtator_subset`** for creating a subset of the pubtator bioconcepts2pubtator_offsets download file based on PMIDs in an input file (one PMID per line)
+
+* Run using `python3 -m preprocess.create_pubtator_subset -h` to see help/options
+* creates a directory with pubtator annotations (abstract+offset) saved with one abstract per file
+* creates another directory with only the abstracts saved in parsed/paragraph format for use with other bioshovel.preprocess modules
+
 **`preprocess.disease_ner`** for performing disease name-entity recognition on paragraph data in parform format
 
 * Runs [DNorm](http://dx.doi.org/10.1093/bioinformatics/btt474) using a process pool on a single machine
