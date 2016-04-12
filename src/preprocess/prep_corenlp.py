@@ -146,12 +146,13 @@ def main(args):
             else:
                 job_file_paths_failed.append(new_job_file_path)
 
-    print('Created {} PBS job files in {}'.format(len(job_file_paths), job_dir))
+    print('Created {} PBS job files in {}'.format(chunk_num+1, job_dir))
 
-    print('Successfully submitted {} jobs with {} failed submissions'.format(jobs_submitted_success,
-                                                                             len(job_file_paths_failed)))
-    for path in job_file_paths_failed:
-        print('FAILED TO SUBMIT', path)
+    if args.submit:
+        print('Successfully submitted {} jobs with {} failed submissions'.format(jobs_submitted_success,
+                                                                                 len(job_file_paths_failed)))
+        for path in job_file_paths_failed:
+            print('FAILED TO SUBMIT', path)
 
 
 if __name__ == '__main__':
