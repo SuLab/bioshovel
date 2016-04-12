@@ -53,6 +53,9 @@ def create_job_file(job_dir, sublist_dir, output_directory, chunk_num, args):
         # python 3.4+ required
         module load python/3.5.1
 
+        # Java 1.8+ required
+        module load java/1.8.0_65
+
         # move to bioshovel directory and activate venv
         cd {bioshovel_dir}
         source venv/bin/activate
