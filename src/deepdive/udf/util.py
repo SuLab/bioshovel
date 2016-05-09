@@ -20,3 +20,14 @@ def printl(string):
     '''
 
     print('BIOSHOVEL', string, file=sys.stderr, flush=True)
+
+def filter_files_from_tar(tarfile_obj, filter_string):
+
+    ''' Given a TarFile object, return all files containing filter_string in
+        their path -- return files from the archive as generator of TarInfo
+        objects
+    '''
+
+    for tfmem in tarfile_obj.getmembers():
+        if tfmem.isfile() and filter_string in tfmem.name:
+            yield tfmem

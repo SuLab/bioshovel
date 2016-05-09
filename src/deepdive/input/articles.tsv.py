@@ -29,17 +29,6 @@ def print_article_info(filepath):
     with open(filepath) as f:
         print(os.path.basename(filepath), clean_string(f.read()), sep='\t')
 
-def filter_files_from_tar(tarfile_obj, filter_string):
-
-    ''' Given a TarFile object, return all files containing filter_string in
-        their path -- return files from the archive as generator of TarInfo
-        objects
-    '''
-
-    for tfmem in tarfile_obj.getmembers():
-        if tfmem.isfile() and filter_string in tfmem.name:
-            yield tfmem
-
 def main(conf):
 
     if conf['data_tgz']:
@@ -47,7 +36,7 @@ def main(conf):
         util.printl('Reading through {} .tgz archive files...'.format(len(article_list)))
         for i, article_archive in enumerate(article_list):
             with tarfile.open(article_archive, "r:gz") as tar, tempfile.TemporaryDirectory() as td:
-                input_files = filter_files_from_tar(tar, 'input_files')
+                input_files = util.filter_files_from_tar(tar, 'input_files')
 
                 # extract input_files into tempdir
                 tar.extractall(path=td, members=input_files)
