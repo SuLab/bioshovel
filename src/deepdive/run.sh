@@ -1,0 +1,12 @@
+#!/bin/bash
+
+deepdive compile
+
+deepdive do articles
+#deepdive redo articles
+
+# generate sentence loader scripts
+input/sentences.tsv.sh
+
+deepdive load sentences udf/sentence_import/s-*.tsv.sh
+
