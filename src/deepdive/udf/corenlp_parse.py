@@ -111,8 +111,7 @@ class NLPParser(object):
         pos_tags = self.get_sentence_token_key(current_sentence, 'pos')
         ner_tags = self.get_sentence_token_key(current_sentence, 'ner')
         doc_offsets = self.get_sentence_offsets(current_sentence)
-        dep_types = '{text9,text10}'
-        dep_tokens = '{3,4,5}'
+        dep_types, dep_tokens = self.parse_dep_tree(current_sentence)
 
         data = [doc_id,
                 sentence_index,
@@ -173,3 +172,22 @@ class NLPParser(object):
         else:
             return start_positions
 
+    @staticmethod
+    def parse_dep_tree(sent):
+
+        ''' Given a sentence, return dep_types and dep_tokens
+            arrays parsed from CoreNLP output JSON
+        '''
+
+        gov = []
+        labels = []
+        dependent = []
+        for dependency in sent['basic-dependencies']:
+            gov.append(dependency['governor'])
+            labels.append(dependency['dep'])
+            dependent.append(dependency['dependent'])
+
+        dep_types = [res[0] for res in sorted(list(zip(labels, dependent)), key=lambda tup: tup[1])]
+        dep_tokens = [res[0] for res in sorted(list(zip(gov, dependent)), key=lambda tup: tup[1])]
+
+        return '{'+str(dep_types)[1:-1]+'}', '{'+str(dep_tokens)[1:-1]+'}'
