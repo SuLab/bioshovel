@@ -58,8 +58,11 @@ def main(conf, current_chunk, total_chunks):
             # corenlp output:
             output_files = filter_files_from_tar(tar, 'output_files')
 
-            # pubtator output:
-            pubtator_files = filter_files_from_tar(tar, 'pubtator')
+            if conf['parse_pubtator']:
+                # pubtator output:
+                pubtator_files = filter_files_from_tar(tar, 'pubtator')
+            else:
+                pubtator_files = []
 
             # extract pubtator and corenlp output files into tempdir
             tar.extractall(path=td, members=itertools.chain(output_files, pubtator_files))
@@ -69,10 +72,13 @@ def main(conf, current_chunk, total_chunks):
                                                              '*',
                                                              'output_files',
                                                              '*')))
-            pubtator_filepaths = sorted(glob.glob(os.path.join(td,
-                                                               '*',
-                                                               'pubtator',
-                                                               '*')))
+            if conf['parse_pubtator']:
+                pubtator_filepaths = sorted(glob.glob(os.path.join(td,
+                                                                   '*',
+                                                                   'pubtator',
+                                                                   '*')))
+            else:
+                pubtator_filepaths = [None for _ in output_filepaths]
 
             for i, (fp, pubtator_fp) in enumerate(zip(output_filepaths, pubtator_filepaths)):
                 parse_corenlp_output(conf, fp, pubtator_fp)
