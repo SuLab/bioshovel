@@ -1,4 +1,6 @@
 {
     "data_directory": "../../data/corpus/pubtator_abstracts/",
-    "data_tgz": true
+    "data_tgz": true,
+    "fuzzy_ner_match": true,
+    "fuzzy_ratio": 75
 }

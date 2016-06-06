@@ -5,10 +5,21 @@ import json
 import sys
 
 from pubtator_parse import PubtatorParser
+from util import printl
+try:
+    from fuzzywuzzy import fuzz
+except ImportError:
+    printl('fuzzywuzzy module not found -- fuzzy string matching disabled')
+    fuzz = None
 
 class NLPParser(object):
 
-    def __init__(self, file_path, pubtator_file_path=None):
+    def __init__(self, file_path, pubtator_file_path=None, fuzzy_ner_match=False):
+
+        ''' fuzzy_ner_match is either False or an integer ratio threshold to use
+            for Levenshtein distance between tokens
+        '''
+
         with open(file_path) as f:
             self._json = json.load(f, strict=False)
 
@@ -87,6 +98,8 @@ class NLPParser(object):
         else:
             self.pubtator = None
 
+        self.fuzzy_ner_match = fuzzy_ner_match
+
     @property
     def sentences(self):
         return self._json.get('sentences', None)
@@ -137,6 +150,10 @@ class NLPParser(object):
                             # exact match! update CoreNLP NER with PubTator NER
                             t['ner'] = biothing.ner_type
                             break
+                        elif fuzz and self.fuzzy_ner_match:
+                            if fuzz.ratio(t['originalText'].lower(), biothing.token.lower()) > self.fuzzy_ner_match:
+                                t['ner'] = biothing.ner_type
+                                break
 
         ner_tags = self.get_sentence_token_key(current_sentence, 'ner')
         doc_offsets = self.get_sentence_offsets(current_sentence)

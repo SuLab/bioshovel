@@ -12,9 +12,16 @@ from util import (filter_files_from_tar,
                   load_config,
                   printl)
 
-def parse_corenlp_output(filepath, pubtator_file_path):
+def parse_corenlp_output(conf, filepath, pubtator_file_path):
 
-    nlp_parser = NLPParser(filepath, pubtator_file_path)
+    if conf['fuzzy_ner_match']:
+        fuzzy_ratio = conf['fuzzy_ratio']
+    else:
+        fuzzy_ratio = False
+
+    nlp_parser = NLPParser(filepath,
+                           pubtator_file_path,
+                           fuzzy_ner_match=fuzzy_ratio)
     for i, row in enumerate(nlp_parser):
         print(row, flush=True)
 
@@ -68,7 +75,7 @@ def main(conf, current_chunk, total_chunks):
                                                                '*')))
 
             for i, (fp, pubtator_fp) in enumerate(zip(output_filepaths, pubtator_filepaths)):
-                parse_corenlp_output(fp, pubtator_fp)
+                parse_corenlp_output(conf, fp, pubtator_fp)
                 if i % 1000 == 0:
                     printl('Processed file {} of chunk'.format(i))
 
