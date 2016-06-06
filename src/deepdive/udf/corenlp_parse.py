@@ -4,9 +4,11 @@ import os
 import json
 import sys
 
+from pubtator_parse import PubtatorParser
+
 class NLPParser(object):
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, pubtator_file_path=None):
         with open(file_path) as f:
             self._json = json.load(f, strict=False)
 
@@ -68,6 +70,23 @@ class NLPParser(object):
         self.doc_id = os.path.basename(file_path).replace('.json', '')
         self.num_sents = len(self._json['sentences'])
 
+        # initialize pubtator parser, if a pubtator file is specified
+        if pubtator_file_path:
+            self.pubtator = PubtatorParser(pubtator_file_path)
+
+            # calculate sentence_offsets here:
+            # [(sent1_start, sent1_end), (sent2_start, send2_end), ...]
+            # sentence_offsets = []
+            # for sent in self.sentences:
+            #     first_token = sent['tokens'][0]
+            #     last_token = sent['tokens'][-1]
+            #     sentence_offsets.append((first_token['characterOffsetBegin'],
+            #                              last_token['characterOffsetEnd']))
+
+            self.pubtator.parse_ner(self.sentences)
+        else:
+            self.pubtator = None
+
     @property
     def sentences(self):
         return self._json.get('sentences', None)
@@ -109,6 +128,16 @@ class NLPParser(object):
         tokens = self.get_sentence_token_key(current_sentence, 'word')
         lemmas = self.get_sentence_token_key(current_sentence, 'lemma')
         pos_tags = self.get_sentence_token_key(current_sentence, 'pos')
+        if self.pubtator and self.pubtator.sentence_ner[sentence_index]:
+                # process pubtator NER! (read CoreNLP tokens, see any of them match exactly...)
+                for t in current_sentence['tokens']:
+                    for biothing in self.pubtator.sentence_ner[sentence_index]:
+                        start, end = biothing.corenlp_offsets
+                        if t['characterOffsetBegin'] == start and t['characterOffsetEnd'] == end:
+                            # exact match! update CoreNLP NER with PubTator NER
+                            t['ner'] = biothing.ner_type
+                            break
+
         ner_tags = self.get_sentence_token_key(current_sentence, 'ner')
         doc_offsets = self.get_sentence_offsets(current_sentence)
         dep_types, dep_tokens = self.parse_dep_tree(current_sentence)
