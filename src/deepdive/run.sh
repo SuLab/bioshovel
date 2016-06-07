@@ -10,3 +10,4 @@ input/sentences.tsv.sh
 
 deepdive load sentences udf/sentence_import/s-*.tsv.sh
 
+deepdive do person_mention
