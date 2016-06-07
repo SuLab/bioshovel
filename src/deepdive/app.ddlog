@@ -135,3 +135,25 @@ species_mention += map_species_mention(
     sentences(doc_id, sentence_index, _, tokens, _, _, ner_tags, _, _, _).
 
 // -----------------------------------------------------------------------------
+// following example of spouse candidates, but excluding sentences that have
+// 3 or more genes (example excluded sentences with 5 or more person mentions)
+
+gene_gene_candidate(
+    g1_id   text,
+    g1_name text,
+    g2_id   text,
+    g2_name text
+).
+
+num_genes(doc_id, sentence_index, COUNT(p)) :-
+    gene_mention(p, _, doc_id, sentence_index, _, _).
+
+gene_gene_candidate(g1, g1_name, g2, g2_name) :-
+    num_genes(same_doc, same_sentence, num_g),
+    gene_mention(g1, g1_name, same_doc, same_sentence, g1_begin, _),
+    gene_mention(g2, g2_name, same_doc, same_sentence, g2_begin, _),
+    num_g < 3,
+    g1_name != g2_name,
+    g1_begin != g2_begin.
+
+// -----------------------------------------------------------------------------

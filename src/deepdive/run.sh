@@ -19,3 +19,5 @@ deepdive do disease_mention
 deepdive do gene_mention
 
 deepdive do species_mention
+
+deepdive do gene_gene_candidate
