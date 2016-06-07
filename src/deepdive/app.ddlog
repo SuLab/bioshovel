@@ -37,3 +37,25 @@ person_mention += map_person_mention(
     doc_id, sentence_index, tokens, ner_tags
 ) :-
     sentences(doc_id, sentence_index, _, tokens, _, _, ner_tags, _, _, _).
+
+chemical_mention(
+    mention_id     text,
+    mention_text   text,
+    doc_id         text,
+    sentence_index int,
+    begin_index    int,
+    end_index      int
+).
+
+function map_chemical_mention over (
+        doc_id         text,
+        sentence_index int,
+        tokens         text[],
+        ner_tags       text[]
+    ) returns rows like chemical_mention
+    implementation "udf/map_chemical_mention.py" handles tsv lines.
+
+chemical_mention += map_chemical_mention(
+    doc_id, sentence_index, tokens, ner_tags
+) :-
+    sentences(doc_id, sentence_index, _, tokens, _, _, ner_tags, _, _, _).
