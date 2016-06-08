@@ -157,3 +157,37 @@ gene_gene_candidate(g1, g1_name, g2, g2_name) :-
     g1_begin != g2_begin.
 
 // -----------------------------------------------------------------------------
+// feature extraction with ddlib in DDlog
+// (following example of spouse example)
+
+gene_gene_feature(
+    g1_id   text,
+    g2_id   text,
+    feature text
+).
+
+function extract_gene_gene_features over (
+        g1_id          text,
+        g2_id          text,
+        g1_begin_index int,
+        g1_end_index   int,
+        g2_begin_index int,
+        g2_end_index   int,
+        doc_id         text,
+        sent_index     int,
+        tokens         text[],
+        lemmas         text[],
+        pos_tags       text[],
+        ner_tags       text[],
+        dep_types      text[],
+        dep_tokens     int[]
+    ) returns rows like gene_gene_feature
+    implementation "udf/extract_gene_gene_features.py" handles tsv lines.
+
+gene_gene_feature += extract_gene_gene_features(
+    g1_id, g2_id, g1_begin_index, g1_end_index, g2_begin_index, g2_end_index,
+    doc_id, sent_index, tokens, lemmas, pos_tags, ner_tags, dep_types, dep_tokens
+) :-
+    gene_mention(g1_id, _, doc_id, sent_index, g1_begin_index, g1_end_index),
+    gene_mention(g2_id, _, doc_id, sent_index, g2_begin_index, g2_end_index),
+    sentences(doc_id, sent_index, _, tokens, lemmas, pos_tags, ner_tags, _, dep_types, dep_tokens).
