@@ -70,6 +70,12 @@ class BioNERTag(object):
 
         self.ner_type = self.ner_type.upper()
 
+        # convert self.concept_id to a set of MESH IDs (will often have len 1)
+        if '|' in self.concept_id:
+            self.concept_id = set(self.concept_id.split('|'))
+        else:
+            self.concept_id = set([self.concept_id])
+
         if sent_index > 0:
             self.start_char_corenlp = self.start_char + 1
             self.end_char_corenlp = self.end_char + 1
