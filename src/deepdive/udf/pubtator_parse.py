@@ -14,6 +14,10 @@ class PubtatorParser(object):
         # this will be an empty list if no NER information is present:
         self.ner_lines = self.file_lines[2:]
 
+        # filter out CID (Biocreative gold standard) lines
+        self.cid_lines = [line for line in self.ner_lines if line.split('\t')[1] == 'CID']
+        self.ner_lines = [line for line in self.ner_lines if line.split('\t')[1] != 'CID']
+
         self.sentence_ner = defaultdict(list)
 
     def parse_ner(self, sentences):
