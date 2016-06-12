@@ -21,3 +21,7 @@ deepdive do gene_mention
 deepdive do species_mention
 
 deepdive do gene_gene_candidate
+
+deepdive do chemical_disease_candidate
+
+deepdive do chemical_disease_feature

@@ -191,3 +191,87 @@ gene_gene_feature += extract_gene_gene_features(
     gene_mention(g1_id, _, doc_id, sent_index, g1_begin_index, g1_end_index),
     gene_mention(g2_id, _, doc_id, sent_index, g2_begin_index, g2_end_index),
     sentences(doc_id, sent_index, _, tokens, lemmas, pos_tags, ner_tags, _, dep_types, dep_tokens).
+
+// -----------------------------------------------------------------------------
+// again, following example of spouse candidates -- but for pairs of chem mentions
+// (again excluding sentences that have 3 or more mentions (example excluded
+// sentences with 5 or more person mentions)
+
+chem_chem_candidate(
+    c1_id   text,
+    c1_name text,
+    c2_id   text,
+    c2_name text
+).
+
+num_chems(doc_id, sentence_index, COUNT(p)) :-
+    chemical_mention(p, _, doc_id, sentence_index, _, _).
+
+chem_chem_candidate(c1, c1_name, c2, c2_name) :-
+    num_chems(same_doc, same_sentence, num_c),
+    chemical_mention(c1, c1_name, same_doc, same_sentence, c1_begin, _),
+    chemical_mention(c2, c2_name, same_doc, same_sentence, c2_begin, _),
+    num_c < 3,
+    c1_name != c2_name,
+    c1_begin != c2_begin.
+
+// -----------------------------------------------------------------------------
+// constructing chem-disease candidates -- pairs of chemical_mentions and
+// disease_mentions
+
+chemical_disease_candidate(
+    chem_id     text,
+    chem_name   text,
+    disease_id      text,
+    disease_name    text
+).
+
+num_chems(doc_id, sentence_index, COUNT(c)) :-
+    chemical_mention(c, _, doc_id, sentence_index, _, _).
+
+num_dis(doc_id, sentence_index, COUNT(d)) :-
+    disease_mention(d, _, doc_id, sentence_index, _, _).
+
+// restrict to sentences with only one disease and one chemical mention
+chemical_disease_candidate(c, c_name, d, d_name) :-
+    num_chems(same_doc, same_sentence, num_c),
+    num_dis(same_doc, same_sentence, num_d),
+    chemical_mention(c, c_name, same_doc, same_sentence, c_begin, _),
+    disease_mention(d, d_name, same_doc, same_sentence, d_begin, _),
+    num_c = 1,
+    num_d = 1.
+
+// -----------------------------------------------------------------------------
+
+chemical_disease_feature(
+    chemical_id     text,
+    disease_id  text,
+    feature     text
+).
+
+function extract_chemical_disease_features over (
+        chemical_id             text,
+        disease_id          text,
+        chemical_begin_index    int,
+        chemical_end_index      int,
+        disease_begin_index int,
+        disease_end_index   int,
+        doc_id              text,
+        sent_index          int,
+        tokens              text[],
+        lemmas              text[],
+        pos_tags            text[],
+        ner_tags            text[],
+        dep_types           text[],
+        dep_tokens          int[]
+    ) returns rows like chemical_disease_feature
+    implementation "udf/extract_chemical_disease_features.py" handles tsv lines.
+
+chemical_disease_feature += extract_chemical_disease_features(
+    chemical_id, disease_id, chemical_begin_index, chemical_end_index, disease_begin_index, disease_end_index,
+    doc_id, sent_index, tokens, lemmas, pos_tags, ner_tags, dep_types, dep_tokens
+) :-
+    chemical_mention(chemical_id, _, doc_id, sent_index, chemical_begin_index, chemical_end_index),
+    disease_mention(disease_id, _, doc_id, sent_index, disease_begin_index, disease_end_index),
+    sentences(doc_id, sent_index, _, tokens, lemmas, pos_tags, ner_tags, _, dep_types, dep_tokens).
+
