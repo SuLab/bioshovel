@@ -60,6 +60,9 @@ class BioNERTag(object):
 
     def __init__(self, sent_index, line):
 
+        # store the sentence in which this tag was found...
+        self.sent_index = sent_index
+
         self.line = line
 
         line_split = line.rstrip('\n').split('\t')
