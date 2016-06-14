@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export CURRENT_DD_APP=`pwd`
+
 deepdive compile
 
 deepdive do articles

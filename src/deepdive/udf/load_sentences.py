@@ -3,7 +3,7 @@
 import glob
 import itertools
 import os
-os.chdir('/home/ubuntu/sandip/bioshovel_dd/src/deepdive')
+os.chdir(os.environ['CURRENT_DD_APP'])
 import sys
 import tarfile
 import tempfile
