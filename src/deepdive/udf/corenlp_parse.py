@@ -99,6 +99,7 @@ class NLPParser(object):
             self.pubtator = None
 
         self.fuzzy_ner_match = fuzzy_ner_match
+        self.pubtator_ner_updated = False
 
     @property
     def sentences(self):
@@ -141,20 +142,6 @@ class NLPParser(object):
         tokens = self.get_sentence_token_key(current_sentence, 'word')
         lemmas = self.get_sentence_token_key(current_sentence, 'lemma')
         pos_tags = self.get_sentence_token_key(current_sentence, 'pos')
-        if self.pubtator and self.pubtator.sentence_ner[sentence_index]:
-                # process pubtator NER! (read CoreNLP tokens, see any of them match exactly...)
-                for t in current_sentence['tokens']:
-                    for biothing in self.pubtator.sentence_ner[sentence_index]:
-                        start, end = biothing.corenlp_offsets
-                        if t['characterOffsetBegin'] == start and t['characterOffsetEnd'] == end:
-                            # exact match! update CoreNLP NER with PubTator NER
-                            t['ner'] = biothing.ner_type
-                            break
-                        elif fuzz and self.fuzzy_ner_match:
-                            if fuzz.ratio(t['originalText'].lower(), biothing.token.lower()) > self.fuzzy_ner_match:
-                                t['ner'] = biothing.ner_type
-                                break
-
         ner_tags = self.get_sentence_token_key(current_sentence, 'ner')
         doc_offsets = self.get_sentence_offsets(current_sentence)
         dep_types, dep_tokens = self.parse_dep_tree(current_sentence)
@@ -173,6 +160,38 @@ class NLPParser(object):
         single_row = '\t'.join([str(item) for item in data])
 
         return single_row
+
+    def update_ner_pubtator(self):
+
+        ''' Process sentence tokens and see if any match to PubTator entity
+            mentions. If so, replace their token['ner'] with the PubTator NER
+            class (CHEMICAL, DISEASE, etc.)
+        '''
+
+        if self.pubtator:
+            for sent in self.sentences:
+                sentence_index = sent['index']
+
+                # are there any PubTator NER tags for this sentence?
+                if not self.pubtator.sentence_ner[sentence_index]:
+                    continue
+
+                # process pubtator NER! (read CoreNLP tokens, see any of them match exactly...)
+                for t in sent['tokens']:
+                    for biothing in self.pubtator.sentence_ner[sentence_index]:
+                        start, end = biothing.corenlp_offsets
+                        if t['characterOffsetBegin'] == start and t['characterOffsetEnd'] == end:
+                            # exact match! update CoreNLP NER with PubTator NER
+                            t['ner'] = biothing.ner_type
+                            break
+                        elif fuzz and self.fuzzy_ner_match:
+                            if fuzz.ratio(t['originalText'].lower(), biothing.token.lower()) > self.fuzzy_ner_match:
+                                t['ner'] = biothing.ner_type
+                                break
+            self.pubtator_ner_updated = True
+
+        return self.pubtator_ner_updated
+
 
     @staticmethod
     def get_sentence_token_key(sent, key, join_str=',', prefix='{', suffix='}', surround_quotes=True):
