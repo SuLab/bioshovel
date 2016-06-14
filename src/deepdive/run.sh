@@ -8,6 +8,7 @@ deepdive do articles
 # generate sentence loader scripts
 input/sentences.tsv.sh
 
+deepdive do sentences
 deepdive load sentences udf/sentence_import/s-*.tsv.sh
 
 deepdive do person_mention
