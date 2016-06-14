@@ -56,6 +56,23 @@ class PubtatorParser(object):
                     self.sentence_ner[sent_num].append(biothing)
                     break
 
+    @property
+    def cid_ground_truth_ids(self):
+
+        ''' Returns a list of tuples generated from any given relations
+            specified by self.cid_lines
+
+            Tuples will have the form:
+            (chem_MESH_id, disease_MESH_id)
+        '''
+
+        cid_tuples = []
+        for line in self.cid_lines:
+            line_split = line.split('\t')
+            cid_tuples.append((line_split[2], line_split[3].rstrip('\n')))
+
+        return cid_tuples
+
 class BioNERTag(object):
 
     def __init__(self, sent_index, line):
@@ -85,6 +102,8 @@ class BioNERTag(object):
         else:
             self.start_char_corenlp = self.start_char
             self.end_char_corenlp = self.end_char
+
+        self.matched_corenlp_token = False
 
     @property
     def corenlp_offsets(self):

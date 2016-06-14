@@ -28,3 +28,13 @@ deepdive do gene_gene_candidate
 deepdive do chemical_disease_candidate
 
 deepdive do chemical_disease_feature
+
+# deepdive do cid_ground_truth
+# deepdive load cid_ground_truth udf/load_labeled_data.tsv.sh
+
+deepdive do sentences_training
+deepdive load sentences_training udf/load_labeled_data.tsv.sh
+
+deepdive do chemical_mention_training
+
+deepdive do disease_mention_training

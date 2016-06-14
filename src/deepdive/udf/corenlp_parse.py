@@ -161,6 +161,42 @@ class NLPParser(object):
 
         return single_row
 
+    def get_cid_filtered_sentence_rows(self):
+
+        ''' Acts as a generator for sentence data, but only sentence data that
+            contains a known gold standard relation
+        '''
+
+        if not self.pubtator_ner_updated:
+            if not self.update_ner_pubtator():
+                # if updating ner_tags with pubtator info fails, return
+                return None
+
+        contains_cid_ground_truth_relation = True
+        pubtator_sent_dict = self.pubtator.sentence_ner
+        pubtator_cid_tuples = self.pubtator.cid_ground_truth_ids
+
+        # iterate over instance (see __next__())
+        for row in self:
+            biothings_for_sentence = pubtator_sent_dict[self.sent_index]
+            if biothings_for_sentence:
+                # (if there are PubTator NER tags for this sentence)
+                found_c1, found_c2 = False, False
+                for concept1, concept2 in pubtator_cid_tuples:
+                    # check if mention1 and mention2 are both found in this
+                    # sentence's tokens
+                    for thing in biothings_for_sentence:
+                        if not thing.matched_corenlp_token:
+                            continue
+                        if concept1 in thing.concept_id:
+                            found_c1 = True
+                        if concept2 in thing.concept_id:
+                            found_c2 = True
+                if found_c1 and found_c2:
+                    # if any of the tuples were found in the sentence,
+                    # return the sentence as a gold standard example
+                    yield row
+
     def update_ner_pubtator(self):
 
         ''' Process sentence tokens and see if any match to PubTator entity
@@ -182,10 +218,12 @@ class NLPParser(object):
                         start, end = biothing.corenlp_offsets
                         if t['characterOffsetBegin'] == start and t['characterOffsetEnd'] == end:
                             # exact match! update CoreNLP NER with PubTator NER
+                            biothing.matched_corenlp_token = True
                             t['ner'] = biothing.ner_type
                             break
                         elif fuzz and self.fuzzy_ner_match:
                             if fuzz.ratio(t['originalText'].lower(), biothing.token.lower()) > self.fuzzy_ner_match:
+                                biothing.matched_corenlp_token = True
                                 t['ner'] = biothing.ner_type
                                 break
             self.pubtator_ner_updated = True

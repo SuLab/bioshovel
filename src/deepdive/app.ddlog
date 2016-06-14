@@ -275,3 +275,77 @@ chemical_disease_feature += extract_chemical_disease_features(
     disease_mention(disease_id, _, doc_id, sent_index, disease_begin_index, disease_end_index),
     sentences(doc_id, sent_index, _, tokens, lemmas, pos_tags, ner_tags, _, dep_types, dep_tokens).
 
+// -----------------------------------------------------------------------------
+// ground truth (training relations)
+// (can be joined with chemical_disease_candidate)
+
+// strategy: make second sentences table and process in the same way to extract
+// mention spans and chemical-disease relations based on training data
+
+// load using:
+// `deepdive do sentences_training && 
+//  deepdive load sentences_training udf/load_labeled_data.tsv.sh`
+sentences_training(
+    doc_id         text,
+    sentence_index int,
+    sentence_text  text,
+    tokens         text[],
+    lemmas         text[],
+    pos_tags       text[],
+    ner_tags       text[],
+    doc_offsets    int[],
+    dep_types      text[],
+    dep_tokens     int[]
+).
+
+chemical_mention_training(
+    mention_id     text,
+    mention_text   text,
+    doc_id         text,
+    sentence_index int,
+    begin_index    int,
+    end_index      int
+).
+
+// previously defined above:
+//function map_chemical_mention over (
+//        doc_id         text,
+//        sentence_index int,
+//        tokens         text[],
+//        ner_tags       text[]
+//    ) returns rows like chemical_mention
+//    implementation "udf/map_chemical_mention.py" handles tsv lines.
+
+chemical_mention_training += map_chemical_mention(
+    doc_id, sentence_index, tokens, ner_tags
+) :-
+    sentences_training(doc_id, sentence_index, _, tokens, _, _, ner_tags, _, _, _).
+
+disease_mention_training(
+    mention_id     text,
+    mention_text   text,
+    doc_id         text,
+    sentence_index int,
+    begin_index    int,
+    end_index      int
+).
+
+// previously defined above:
+//function map_disease_mention over (
+//        doc_id         text,
+//        sentence_index int,
+//        tokens         text[],
+//        ner_tags       text[]
+//    ) returns rows like disease_mention
+//    implementation "udf/map_disease_mention.py" handles tsv lines.
+
+disease_mention_training += map_disease_mention(
+    doc_id, sentence_index, tokens, ner_tags
+) :-
+    sentences_training(doc_id, sentence_index, _, tokens, _, _, ner_tags, _, _, _).
+
+//cid_ground_truth(
+//    chem_id     text,
+//    disease_id  text,
+//    doc_set     text
+//).
