@@ -106,7 +106,7 @@ class NLPParser(object):
         return self._json.get('sentences', None)
     
     def __iter__(self):
-        self.sent_index = 0
+        self.sent_index = -1
 
         if self.exclude:
             # set index to max so that iteration does not occur
@@ -117,7 +117,7 @@ class NLPParser(object):
     def __next__(self):
 
         self.sent_index += 1
-        if self.sent_index >= self.num_sents:
+        if self.sent_index == self.num_sents:
             raise StopIteration
 
         current_sentence = self.sentences[self.sent_index]
