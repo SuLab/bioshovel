@@ -38,3 +38,5 @@ deepdive load sentences_training udf/load_labeled_data.tsv.sh
 deepdive do chemical_mention_training
 
 deepdive do disease_mention_training
+
+deepdive do cid_ground_truth

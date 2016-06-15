@@ -307,15 +307,6 @@ chemical_mention_training(
     end_index      int
 ).
 
-// previously defined above:
-//function map_chemical_mention over (
-//        doc_id         text,
-//        sentence_index int,
-//        tokens         text[],
-//        ner_tags       text[]
-//    ) returns rows like chemical_mention
-//    implementation "udf/map_chemical_mention.py" handles tsv lines.
-
 chemical_mention_training += map_chemical_mention(
     doc_id, sentence_index, tokens, ner_tags
 ) :-
@@ -330,22 +321,22 @@ disease_mention_training(
     end_index      int
 ).
 
-// previously defined above:
-//function map_disease_mention over (
-//        doc_id         text,
-//        sentence_index int,
-//        tokens         text[],
-//        ner_tags       text[]
-//    ) returns rows like disease_mention
-//    implementation "udf/map_disease_mention.py" handles tsv lines.
-
 disease_mention_training += map_disease_mention(
     doc_id, sentence_index, tokens, ner_tags
 ) :-
     sentences_training(doc_id, sentence_index, _, tokens, _, _, ner_tags, _, _, _).
 
-//cid_ground_truth(
-//    chem_id     text,
-//    disease_id  text,
-//    doc_set     text
-//).
+cid_ground_truth(
+    chem_id     text,
+    chem_name   text,
+    disease_id      text,
+    disease_name    text
+).
+
+cid_ground_truth(c, c_name, d, d_name) :-
+    num_chems(same_doc, same_sentence, num_c),
+    num_dis(same_doc, same_sentence, num_d),
+    chemical_mention_training(c, c_name, same_doc, same_sentence, c_begin, _),
+    disease_mention_training(d, d_name, same_doc, same_sentence, d_begin, _),
+    num_c = 1,
+    num_d = 1.
