@@ -73,6 +73,13 @@ class PubtatorParser(object):
 
         return cid_tuples
 
+    def make_mesh_token_lookup(self):
+        self.mesh_dict = defaultdict(dict)
+        for line in self.ner_lines:
+            biothing = BioNERTag(0, line) # using a fake sentence_index here
+            for concept_id in biothing.concept_id:
+                self.mesh_dict[concept_id] = biothing.token
+
 class BioNERTag(object):
 
     def __init__(self, sent_index, line):
