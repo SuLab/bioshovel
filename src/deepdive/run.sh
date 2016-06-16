@@ -1,42 +1,17 @@
 #!/bin/bash
 
 export CURRENT_DD_APP=`pwd`
+MINCHUNK=0
+MAXCHUNK=0
 
 deepdive compile
 
+# load articles
 deepdive do articles
-#deepdive redo articles
+input/articles.tsv.sh $MINCHUNK $MAXCHUNK
+deepdive load articles udf/article_import/
 
-# generate sentence loader scripts
-input/sentences.tsv.sh
-
+# load sentences
 deepdive do sentences
+input/sentences.tsv.sh $MINCHUNK $MAXCHUNK
 deepdive load sentences udf/sentence_import/s-*.tsv.sh
-
-deepdive do person_mention
-
-deepdive do chemical_mention
-
-deepdive do disease_mention
-
-deepdive do gene_mention
-
-deepdive do species_mention
-
-deepdive do gene_gene_candidate
-
-deepdive do chemical_disease_candidate
-
-deepdive do chemical_disease_feature
-
-# deepdive do cid_ground_truth
-# deepdive load cid_ground_truth udf/load_labeled_data.tsv.sh
-
-deepdive do sentences_training
-deepdive load sentences_training udf/load_labeled_data.tsv.sh
-
-deepdive do chemical_mention_training
-
-deepdive do disease_mention_training
-
-deepdive do cid_ground_truth
