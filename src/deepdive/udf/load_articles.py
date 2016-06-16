@@ -3,10 +3,14 @@
 import glob
 import json
 import os
+os.chdir(os.environ['CURRENT_DD_APP'])
 import sys
 import tarfile
 import tempfile
-from udf import util
+from pathlib import Path
+from util import (filter_files_from_tar,
+                  load_config,
+                  printl)
 
 def clean_string(contents, newline_replacement='//n'):
 
@@ -19,43 +23,76 @@ def print_article_info(filepath):
 
     ''' Given a filepath, print the file contents as a tab-delimited tuple:
 
-        file_path_basename[tab]file_contents
+        file_path_basename[tab]file_contents[tab]article_filepath[tab]corenlp_filepath[tab]pubtator_filepath
 
-        where file_contents has all tabs replaced by spaces
+        where file_contents has all tabs replaced by spaces, and filepaths are relative
 
-        (this is for the 'articles' table schema: columns (doc_id, contents))
+        This is for the 'articles' table schema:
+
+        articles(
+            doc_id              text,
+            content             text,
+            article_filepath    text,
+            corenlp_filepath    text,
+            pubtator_filepath   text
+        ).
     '''
 
-    with open(filepath) as f:
-        print(os.path.basename(filepath), clean_string(f.read()), sep='\t')
+    # filepath is something like:
+    # Path('/tmp/tmpdirectory12345/tarfile_0_combined/input_files/928240')
 
-def main(conf):
+    filepath_str = str(filepath)
+
+    filename_stem = filepath.stem
+    relative_input_filepath_str = str(Path(filepath.parent.stem)/filename_stem)
+    relative_corenlp_filepath_str = str(Path('output_files')/(filename_stem+'.json'))
+    relative_pubtator_filepath_str = str(Path('pubtator')/filename_stem)
+
+    with open(filepath_str) as f:
+        print(filename_stem,
+              clean_string(f.read()),
+              relative_input_filepath_str,
+              relative_corenlp_filepath_str,
+              relative_pubtator_filepath_str,
+              sep='\t')
+
+def main(conf, current_chunk, total_chunks):
+
+    printl('Loading article data, Chunk {} of {}'.format(current_chunk,
+                                                          total_chunks))
 
     if conf['data_tgz']:
         article_list = glob.glob(os.path.join(conf['data_directory'], '*.tgz'))
-        util.printl('Reading through {} .tgz archive files...'.format(len(article_list)))
-        for i, article_archive in enumerate(article_list):
-            with tarfile.open(article_archive, "r:gz") as tar, tempfile.TemporaryDirectory() as td:
-                input_files = util.filter_files_from_tar(tar, 'input_files')
-
-                # extract input_files into tempdir
-                tar.extractall(path=td, members=input_files)
-
-                # glob/read through input_files and print file data
-                input_filepaths = glob.glob(os.path.join(td,
-                                                         '*',
-                                                         'input_files',
-                                                         '*'))
-
-                for filepath in input_filepaths:
-                    print_article_info(filepath)
-
-                util.printl('Processed tgz archive #{} of {}'.format(i+1,
-                                                                len(article_list)))
-
     else:
         raise NotImplementedError("Can't handle nongzipped files yet")
+    article_chunk = [a for a in article_list if a.endswith('_{}_combined.tgz'.format(current_chunk))]
+    if len(article_chunk) < 1:
+        printl('Article loader - Chunk {} - no file found'.format(current_chunk))
+        sys.exit(1)
+    elif len(article_chunk) > 1:
+        printl('Article loader - Chunk {} - multiple files found: {} (importing anyway)'.format(current_chunk,
+                                                                                                str(article_chunk)))
+
+    for article_archive in article_chunk:
+        printl(article_archive)
+        with tarfile.open(article_archive, "r:gz") as tar, tempfile.TemporaryDirectory() as td:
+            input_files = filter_files_from_tar(tar, 'input_files')
+
+            # extract input_files into tempdir
+            tar.extractall(path=td, members=input_files)
+
+            # glob/read through input_files and print file data
+            input_filepaths = glob.glob(os.path.join(td,
+                                                     '*',
+                                                     'input_files',
+                                                     '*'))
+
+            for i, filepath in enumerate(input_filepaths):
+                print_article_info(Path(filepath))
+                if i % 500 == 0:
+                    printl('Processed file {} of chunk'.format(i))
 
 if __name__ == '__main__':
-    conf = util.load_config()
-    main(conf)
+    conf = load_config()
+    _, current_chunk, total_chunks = sys.argv
+    main(conf, int(current_chunk), int(total_chunks))

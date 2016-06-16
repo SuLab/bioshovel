@@ -22,9 +22,9 @@ def parse_corenlp_output(conf, filepath, pubtator_file_path):
     nlp_parser = NLPParser(filepath,
                            pubtator_file_path,
                            fuzzy_ner_match=fuzzy_ratio)
-    if pubtator_file_path:
-        if nlp_parser.update_ner_pubtator():
-            printl('Updated generic NER with PubTator matches')
+    # if pubtator_file_path:
+    #     if nlp_parser.update_ner_pubtator():
+    #         printl('Updated generic NER with PubTator matches')
     for i, row in enumerate(nlp_parser):
         print(row, flush=True)
 

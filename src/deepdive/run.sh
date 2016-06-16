@@ -9,7 +9,7 @@ deepdive compile
 # load articles
 deepdive do articles
 input/articles.tsv.sh $MINCHUNK $MAXCHUNK
-deepdive load articles udf/article_import/
+deepdive load articles udf/article_import/a-*.tsv.sh
 
 # load sentences
 deepdive do sentences
