@@ -19,11 +19,11 @@ def clean_string(contents, newline_replacement='//n'):
 
     return contents.replace('\t', ' ').replace('\n', newline_replacement)
 
-def print_article_info(filepath):
+def print_article_info(filepath, article_archive_path_str):
 
     ''' Given a filepath, print the file contents as a tab-delimited tuple:
 
-        file_path_basename[tab]file_contents[tab]article_filepath[tab]corenlp_filepath[tab]pubtator_filepath
+        file_path_basename[tab]file_contents[tab]article_archive[tab]article_filepath[tab]corenlp_filepath[tab]pubtator_filepath
 
         where file_contents has all tabs replaced by spaces, and filepaths are relative
 
@@ -32,6 +32,7 @@ def print_article_info(filepath):
         articles(
             doc_id              text,
             content             text,
+            article_archive     text,
             article_filepath    text,
             corenlp_filepath    text,
             pubtator_filepath   text
@@ -51,6 +52,7 @@ def print_article_info(filepath):
     with open(filepath_str) as f:
         print(filename_stem,
               clean_string(f.read()),
+              article_archive_path_str,
               relative_input_filepath_str,
               relative_corenlp_filepath_str,
               relative_pubtator_filepath_str,
@@ -88,7 +90,7 @@ def main(conf, current_chunk, total_chunks):
                                                      '*'))
 
             for i, filepath in enumerate(input_filepaths):
-                print_article_info(Path(filepath))
+                print_article_info(Path(filepath), article_archive)
                 if i % 500 == 0:
                     printl('Processed file {} of chunk'.format(i))
 

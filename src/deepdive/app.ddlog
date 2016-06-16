@@ -1,6 +1,7 @@
 articles(
     doc_id              text,
     content             text,
+    article_archive     text,
     article_filepath    text,
     corenlp_filepath    text,
     pubtator_filepath   text
