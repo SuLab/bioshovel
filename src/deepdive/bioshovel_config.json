@@ -4,5 +4,7 @@
     "data_tgz": true,
     "parse_pubtator": true,
     "fuzzy_ner_match": true,
-    "fuzzy_ratio": 75
+    "fuzzy_ratio": 75,
+    "min_chunk": 0,
+    "max_chunk": 0
 }

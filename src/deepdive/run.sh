@@ -1,8 +1,8 @@
 #!/bin/bash
 
 export CURRENT_DD_APP=`pwd`
-MINCHUNK=0
-MAXCHUNK=0
+MINCHUNK=`cat bioshovel_config.json | deepdive env jq -r '.min_chunk'`
+MAXCHUNK=`cat bioshovel_config.json | deepdive env jq -r '.max_chunk'`
 
 deepdive compile
 
