@@ -29,3 +29,6 @@ deepdive do mention
 
 # create chemical_disease_candidate table
 deepdive do chemical_disease_candidate
+
+# create chemical_disease_feature table and extract features using UDF
+deepdive do chemical_disease_feature

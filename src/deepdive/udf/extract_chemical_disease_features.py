@@ -9,25 +9,30 @@ import ddlib
         feature = "text",
     :[])
 def extract(
-        chemical_id          = "text",
-        disease_id           = "text",
-        chemical_begin_index = "int",
-        chemical_end_index   = "int",
-        disease_begin_index  = "int",
-        disease_end_index    = "int",
-        doc_id         = "text",
-        sent_index     = "int",
-        tokens         = "text[]",
-        lemmas         = "text[]",
-        pos_tags       = "text[]",
-        ner_tags       = "text[]",
-        dep_types      = "text[]",
-        dep_parents    = "int[]",
+        chemical_id             = "text",
+        disease_id              = "text",
+        chemical_begin_index    = "int",
+        chemical_end_index      = "int",
+        disease_begin_index     = "int",
+        disease_end_index       = "int",
+        doc_id                  = "text",
+        sent_index              = "int",
+        tokens                  = "text[]",
+        lemmas                  = "text[]",
+        pos_tags                = "text[]",
+        ner_tags                = "text[]",
+        my_ner_tags             = "text[]",
+        my_ner_tags_token_ids   = "int[]",
+        dep_types               = "text[]",
+        dep_parents             = "int[]",
     ):
     """
-    Uses DDLIB to generate features for the spouse relation.
+    Uses DDLIB to generate features for the chemical-disease relation candidates.
     """
-    # Create a DDLIB sentence object, which is just a list of DDLIB Word objects
+
+    # creates a dictionary of tags from the sparse my_ner_tags array
+    my_ner_tags_dict = { i:tag for i,tag in zip(my_ner_tags_token_ids, my_ner_tags) }
+
     sent = []
     for i,t in enumerate(tokens):
         sent.append(ddlib.Word(
@@ -36,7 +41,8 @@ def extract(
             word=t,
             lemma=lemmas[i],
             pos=pos_tags[i],
-            ner=ner_tags[i],
+            # replace NER tag if one is found for that token in my_ner_tags:
+            ner=my_ner_tags_dict[i] if i in my_ner_tags_dict else ner_tags[i],
             dep_par=dep_parents[i] - 1,  # Note that as stored from CoreNLP 0 is ROOT, but for DDLIB -1 is ROOT
             dep_label=dep_types[i]))
 

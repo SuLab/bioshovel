@@ -43,10 +43,6 @@ corenlp_token(
 corenlp_token(unnest(ner_tags), sentence_index, doc_id, unnest(token_text), unnest(doc_offsets)) :-
     sentences(doc_id, sentence_index, _, token_text, _, _, ner_tags, doc_offsets, _, _).
 
-// working:
-// biothing_token(unnest(ner_tags), 4, sentence_index, doc_id, "mesh_id", unnest(doc_offsets), 0, 1) :-
-//     sentences(doc_id, sentence_index, _, _, _, _, ner_tags, doc_offsets, _, _).
-
 mention(
     mention_id           text,
     mention_type         text,
@@ -72,19 +68,52 @@ mention(doc_id || "_" || sentence_index || "_" || token_id || "_" || token_id,
         token_id,
         mesh_id
         ) :-
-    biothing_token(type, token_id, sentence_index, doc_id, mesh_id, token_start_char, _, _, _),
-    corenlp_token(_, sentence_index, doc_id, token_text, token_start_char).
+    biothing_token(type, token_id, sentence_index, doc_id, mesh_id, token_start_char, token_end_char, _, _),
+    corenlp_token(_, sentence_index, doc_id, token_text, corenlp_start_char),
+    token_start_char = corenlp_start_char.
+
+// mention table -- possible replacement (work in progress)
+// (problem: start token and end token have the same value)
+//mention(doc_id || "_" || sentence_index || "_" || token_id || "_" || token_id,
+//        type,
+//        ARRAY_AGG(token_text),
+//        doc_id,
+//        sentence_index,
+//        MIN(token_id),
+//        MAX(token_id),
+//        mesh_id
+//        ) :-
+//    biothing_token(type, token_id, sentence_index, doc_id, mesh_id, token_start_char, token_end_char, _, _),
+//    corenlp_token(_, sentence_index, doc_id, token_text, corenlp_start_char),
+//    token_start_char < 1+corenlp_start_char, corenlp_start_char < token_end_char
+//    .
+
+//ip-172-30-0-127 deepdive> deepdive query 'spans(
+//        type,
+//        ARRAY_AGG(token_text),
+//        doc_id,
+//        sentence_index,
+//        MIN(token_id),
+//        MAX(token_id),
+//        mesh_id
+//        ) :-
+//    biothing_token(type, token_id, sentence_index, doc_id, mesh_id, token_start_char, token_end_char, _, _),
+//    corenlp_token(_, sentence_index, doc_id, token_text, corenlp_start_char),
+//    token_start_char < 1+corenlp_start_char, corenlp_start_char < token_end_char
+//    .
+//    
+//        ?- spans(type, text, doc, sent, start, end, mesh), start < end.
+//    '
 
 // create pairs of chemical-disease mentions
-
 chemical_disease_candidate(
     chem_id         text,
     chem_name       text,
     chem_mesh_id    text,
     disease_id      text,
     disease_name    text,
-    disease_mesh_id text
-//    relation        text
+    disease_mesh_id text,
+    relation        text
 ).
 
 chemical_disease_candidate(chem_mention_id,
@@ -92,9 +121,65 @@ chemical_disease_candidate(chem_mention_id,
                            chem_mesh_id,
                            disease_mention_id,
                            disease_name,
-                           disease_mesh_id
-                           ) :-
+                           disease_mesh_id,
+                           "CID") :-
     mention(chem_mention_id, mention_type_chem, chem_name, doc_id, sentence_index, _, _, chem_mesh_id),
     mention(disease_mention_id, mention_type_disease, disease_name, doc_id, sentence_index, _, _, disease_mesh_id),
     mention_type_chem = "CHEMICAL",
     mention_type_disease = "DISEASE".
+
+chemical_disease_feature(
+    chemical_id     text,
+    disease_id  text,
+    feature     text
+).
+
+function extract_chemical_disease_features over (
+        chemical_id             text,
+        disease_id              text,
+        chemical_begin_index    int,
+        chemical_end_index      int,
+        disease_begin_index     int,
+        disease_end_index       int,
+        doc_id                  text,
+        sent_index              int,
+        tokens                  text[],
+        lemmas                  text[],
+        pos_tags                text[],
+        ner_tags                text[],
+        my_ner_tags             text[],
+        my_ner_tags_token_ids   int[],
+        dep_types               text[],
+        dep_tokens              int[]
+    ) returns rows like chemical_disease_feature
+    implementation "udf/extract_chemical_disease_features.py" handles tsv lines.
+
+// temporary aggregation table (view) used for chemical_disease_feature
+biothing_token_agg(doc_id, sentence_index, ARRAY_AGG(type), ARRAY_AGG(token_id)) :-
+  biothing_token(type, token_id, sentence_index, doc_id, mesh_id, token_start_char, token_end_char, pubtator_start_char, pubtator_end_char).
+
+chemical_disease_feature += extract_chemical_disease_features(
+    chemical_id, disease_id, chemical_begin_index, chemical_end_index,
+    disease_begin_index, disease_end_index, doc_id, sentence_index, tokens,
+    lemmas, pos_tags, corenlp_ner_tags, my_ner_tags, my_ner_tags_token_ids,
+    dep_types, dep_tokens) :-
+    mention(chemical_id,
+            chem_mention_type,
+            _,
+            doc_id,
+            sentence_index,
+            chemical_begin_index,
+            chemical_end_index,
+            mesh_id),
+    mention(disease_id,
+            disease_mention_type,
+            _,
+            doc_id,
+            sentence_index,
+            disease_begin_index,
+            disease_end_index,
+            dmesh_id),
+    chem_mention_type = "CHEMICAL",
+    disease_mention_type = "DISEASE",
+    biothing_token_agg(doc_id, sentence_index, my_ner_tags, my_ner_tags_token_ids),
+    sentences(doc_id, sentence_index, _, tokens, lemmas, pos_tags, corenlp_ner_tags, _, dep_types, dep_tokens).
