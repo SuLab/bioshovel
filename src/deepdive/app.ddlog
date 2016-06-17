@@ -20,3 +20,30 @@ sentences(
     dep_tokens     int[]
 ).
 
+biothing_token(
+    type                text,
+    token_id            int,
+    sentence_index      int,
+    doc_id              text,
+    mesh_id             text,
+    token_start_char    int,
+    token_end_char      int,
+    pubtator_start_char int,
+    pubtator_end_char   int 
+).
+
+// corenlp_token(
+//     type                text,
+//     token_id            int,
+//     sentence_index      int,
+//     doc_id              text,
+//     token_start         int
+// ).
+
+// working:
+// corenlp_token(unnest(ner_tags), 999, sentence_index, doc_id, unnest(doc_offsets)) :-
+//     sentences(doc_id, sentence_index, _, _, _, _, ner_tags, doc_offsets, _, _).
+
+// working:
+// biothing_token(unnest(ner_tags), 4, sentence_index, doc_id, "mesh_id", unnest(doc_offsets), 0, 1) :-
+//     sentences(doc_id, sentence_index, _, _, _, _, ner_tags, doc_offsets, _, _).

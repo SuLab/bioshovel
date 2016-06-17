@@ -161,6 +161,42 @@ class NLPParser(object):
 
         return single_row
 
+    def get_biothing_tokens(self):
+
+        ''' A generator for associated biothing tokens
+        '''
+
+        # biothing_token(
+        #     type                text,
+        #     token_id            int,
+        #     sentence_index      int,
+        #     doc_id              text,
+        #     mesh_id             text,
+        #     token_start_char    int,
+        #     token_end_char      int,
+        #     pubtator_start_char int,
+        #     pubtator_end_char   int
+        # ).
+
+        if not self.pubtator_ner_updated:
+            self.update_ner_pubtator()
+
+        for sentence_row in self:
+            biothings_for_sentence = self.pubtator.sentence_ner[self.sent_index]
+            for biothing in [bt for bt in biothings_for_sentence if bt.matched_corenlp_token]:
+                bt_type = biothing.ner_type
+                for concept_id in biothing.concept_id:
+                    row = '\t'.join([biothing.ner_type,
+                                     str(biothing.matched_corenlp_token),
+                                     str(self.sent_index),
+                                     self.doc_id,
+                                     concept_id,
+                                     str(biothing.start_char_corenlp),
+                                     str(biothing.end_char_corenlp),
+                                     str(biothing.start_char),
+                                     str(biothing.end_char)])
+                yield row
+
     def get_cid_filtered_sentence_rows(self):
 
         ''' Acts as a generator for sentence data, but only sentence data that
@@ -218,12 +254,12 @@ class NLPParser(object):
                         start, end = biothing.corenlp_offsets
                         if t['characterOffsetBegin'] == start and t['characterOffsetEnd'] == end:
                             # exact match! update CoreNLP NER with PubTator NER
-                            biothing.matched_corenlp_token = True
+                            biothing.matched_corenlp_token = t['index']
                             t['ner'] = biothing.ner_type
                             break
                         elif fuzz and self.fuzzy_ner_match:
                             if fuzz.ratio(t['originalText'].lower(), biothing.token.lower()) > self.fuzzy_ner_match:
-                                biothing.matched_corenlp_token = True
+                                biothing.matched_corenlp_token = t['index']
                                 t['ner'] = biothing.ner_type
                                 break
             self.pubtator_ner_updated = True
