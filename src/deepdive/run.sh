@@ -15,3 +15,11 @@ deepdive load articles udf/article_import/a-*.tsv.sh
 deepdive do sentences
 input/sentences.tsv.sh $MINCHUNK $MAXCHUNK
 deepdive load sentences udf/sentence_import/s-*.tsv.sh
+
+# load biothing_tokens
+deepdive do biothing_token
+input/biothing_token.tsv.sh $MINCHUNK $MAXCHUNK
+deepdive load biothing_token udf/biothing_import/b-*.tsv.sh
+
+# create corenlp_token (from sentences table)
+deepdive do corenlp_token
