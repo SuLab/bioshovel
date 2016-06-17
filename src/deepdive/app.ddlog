@@ -74,3 +74,27 @@ mention(doc_id || "_" || sentence_index || "_" || token_id || "_" || token_id,
         ) :-
     biothing_token(type, token_id, sentence_index, doc_id, mesh_id, token_start_char, _, _, _),
     corenlp_token(_, sentence_index, doc_id, token_text, token_start_char).
+
+// create pairs of chemical-disease mentions
+
+chemical_disease_candidate(
+    chem_id         text,
+    chem_name       text,
+    chem_mesh_id    text,
+    disease_id      text,
+    disease_name    text,
+    disease_mesh_id text
+//    relation        text
+).
+
+chemical_disease_candidate(chem_mention_id,
+                           chem_name,
+                           chem_mesh_id,
+                           disease_mention_id,
+                           disease_name,
+                           disease_mesh_id
+                           ) :-
+    mention(chem_mention_id, mention_type_chem, chem_name, doc_id, sentence_index, _, _, chem_mesh_id),
+    mention(disease_mention_id, mention_type_disease, disease_name, doc_id, sentence_index, _, _, disease_mesh_id),
+    mention_type_chem = "CHEMICAL",
+    mention_type_disease = "DISEASE".

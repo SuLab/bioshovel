@@ -26,3 +26,6 @@ deepdive do corenlp_token
 
 # create mention table
 deepdive do mention
+
+# create chemical_disease_candidate table
+deepdive do chemical_disease_candidate
