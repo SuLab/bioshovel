@@ -75,13 +75,14 @@ def main(conf, current_chunk, total_chunks):
                                                              '*',
                                                              'output_files',
                                                              '*')))
-            if conf['parse_pubtator']:
-                pubtator_filepaths = sorted(glob.glob(os.path.join(td,
-                                                                   '*',
-                                                                   'pubtator',
-                                                                   '*')))
-            else:
-                pubtator_filepaths = [None for _ in output_filepaths]
+            # if conf['parse_pubtator']:
+            #     pubtator_filepaths = sorted(glob.glob(os.path.join(td,
+            #                                                        '*',
+            #                                                        'pubtator',
+            #                                                        '*')))
+            # else:
+            #     pubtator_filepaths = [None for _ in output_filepaths]
+            pubtator_filepaths = [None for _ in output_filepaths]
 
             for i, (fp, pubtator_fp) in enumerate(zip(output_filepaths, pubtator_filepaths)):
                 parse_corenlp_output(conf, fp, pubtator_fp)
