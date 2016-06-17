@@ -32,17 +32,16 @@ biothing_token(
     pubtator_end_char   int 
 ).
 
-// corenlp_token(
-//     type                text,
-//     token_id            int,
-//     sentence_index      int,
-//     doc_id              text,
-//     token_start         int
-// ).
+corenlp_token(
+    type                text,
+    sentence_index      int,
+    doc_id              text,
+    token_text          text,
+    token_start_char    int
+).
 
-// working:
-// corenlp_token(unnest(ner_tags), 999, sentence_index, doc_id, unnest(doc_offsets)) :-
-//     sentences(doc_id, sentence_index, _, _, _, _, ner_tags, doc_offsets, _, _).
+corenlp_token(unnest(ner_tags), sentence_index, doc_id, unnest(token_text), unnest(doc_offsets)) :-
+    sentences(doc_id, sentence_index, _, token_text, _, _, ner_tags, doc_offsets, _, _).
 
 // working:
 // biothing_token(unnest(ner_tags), 4, sentence_index, doc_id, "mesh_id", unnest(doc_offsets), 0, 1) :-
