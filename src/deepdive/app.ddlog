@@ -46,3 +46,31 @@ corenlp_token(unnest(ner_tags), sentence_index, doc_id, unnest(token_text), unne
 // working:
 // biothing_token(unnest(ner_tags), 4, sentence_index, doc_id, "mesh_id", unnest(doc_offsets), 0, 1) :-
 //     sentences(doc_id, sentence_index, _, _, _, _, ner_tags, doc_offsets, _, _).
+
+mention(
+    mention_id           text,
+    mention_type         text,
+    mention_text         text,
+    doc_id               text,
+    sentence_index       int,
+    token_start_index    int,
+    token_end_index      int,
+    mesh_id              text
+).
+
+// this is only taking tokens and identifying them as mentions, NOT combining spans
+// (TO DO)
+//
+// Also, this only takes biothing_tokens for now. (may expand to other NER types in the future...)
+//
+mention(doc_id || "_" || sentence_index || "_" || token_id || "_" || token_id,
+        type,
+        token_text,
+        doc_id,
+        sentence_index,
+        token_id,
+        token_id,
+        mesh_id
+        ) :-
+    biothing_token(type, token_id, sentence_index, doc_id, mesh_id, token_start_char, _, _, _),
+    corenlp_token(_, sentence_index, doc_id, token_text, token_start_char).

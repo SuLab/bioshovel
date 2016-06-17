@@ -23,3 +23,6 @@ deepdive load biothing_token udf/biothing_import/b-*.tsv.sh
 
 # create corenlp_token (from sentences table)
 deepdive do corenlp_token
+
+# create mention table
+deepdive do mention
