@@ -32,3 +32,11 @@ deepdive do chemical_disease_candidate
 
 # create chemical_disease_feature table and extract features using UDF
 deepdive do chemical_disease_feature
+
+# pull out CID ground truth relations and load into data table
+TRAINING_DATA_DIR=`cat bioshovel_config.json | deepdive env jq -r '.training_data_directory'`
+cd $TRAINING_DATA_DIR
+cat biocreative_cdr_training/pubtator_cid/* | grep -P '\tCID\t' | awk -v OFS='\t' '{ print $3, $4, $2 }' > /tmp/chemical_disease_gt.tsv
+cd -
+mv /tmp/chemical_disease_gt.tsv input/
+deepdive do chemical_disease_gt

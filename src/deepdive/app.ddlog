@@ -183,3 +183,10 @@ chemical_disease_feature += extract_chemical_disease_features(
     disease_mention_type = "DISEASE",
     biothing_token_agg(doc_id, sentence_index, my_ner_tags, my_ner_tags_token_ids),
     sentences(doc_id, sentence_index, _, tokens, lemmas, pos_tags, corenlp_ner_tags, _, dep_types, dep_tokens).
+
+// chemical-disease ground truth data table (chemical-induce-disease, CID)
+chemical_disease_gt(
+    mesh_id_chemical    text,
+    mesh_id_disease     text,
+    relation            text
+).
