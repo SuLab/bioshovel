@@ -43,3 +43,5 @@ cat biocreative_cdr_training/pubtator_cid/* | grep -P '\tCID\t' | awk -v OFS='\t
 cd -
 mv /tmp/chemical_disease_gt.tsv input/
 deepdive do chemical_disease_gt
+
+deepdive do probabilities

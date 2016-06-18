@@ -204,3 +204,12 @@ has_relation(chem_id, disease_id, "CID") =
     cand_disease_mesh_id = gt_disease_mesh_id,
     cand_chem_mesh_id = gt_chem_mesh_id
     ].
+
+@weight(feature)
+has_relation(chem_id, disease_id, "CID") :-
+    chemical_disease_candidate(chem_id, _, _, disease_id, _, _),
+    chemical_disease_feature(chem_id, disease_id, feature).
+
+@weight(-1.0)
+has_relation(chem_id, disease_id, "CID") v has_relation(disease_id, chem_id, "CID") :-
+    chemical_disease_candidate(chem_id, _, _, disease_id, _, _).
