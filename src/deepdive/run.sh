@@ -4,6 +4,9 @@ export CURRENT_DD_APP=`pwd`
 MINCHUNK=`cat bioshovel_config.json | deepdive env jq -r '.min_chunk'`
 MAXCHUNK=`cat bioshovel_config.json | deepdive env jq -r '.max_chunk'`
 
+# don't open editor for plan for each each `deepdive do`
+export DEEPDIVE_PLAN_EDIT=false
+
 deepdive compile
 
 # load articles
