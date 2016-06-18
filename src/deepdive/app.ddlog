@@ -188,3 +188,19 @@ chemical_disease_gt(
     mesh_id_disease     text,
     relation            text
 ).
+
+// specify prediction variable
+has_relation?(
+    chem_id     text,
+    disease_id  text,
+    subtype     text
+).
+
+// (OPTIONAL specifies an outer join)
+has_relation(chem_id, disease_id, "CID") =
+    if gt_disease_mesh_id IS NULL then NULL else TRUE end :-
+    chemical_disease_candidate(chem_id, _, cand_chem_mesh_id, disease_id, _, cand_disease_mesh_id),
+    OPTIONAL[ chemical_disease_gt(gt_chem_mesh_id, gt_disease_mesh_id, subtype),
+    cand_disease_mesh_id = gt_disease_mesh_id,
+    cand_chem_mesh_id = gt_chem_mesh_id
+    ].
