@@ -19,7 +19,7 @@ def clean_string(contents, newline_replacement='//n'):
 
     return contents.replace('\t', ' ').replace('\n', newline_replacement)
 
-def print_article_info(filepath, article_archive_path_str):
+def print_article_info(filepath, article_archive_path_str, train_dev_test_dict):
 
     ''' Given a filepath, print the file contents as a tab-delimited tuple:
 
@@ -48,6 +48,7 @@ def print_article_info(filepath, article_archive_path_str):
     relative_input_filepath_str = str(Path(filepath.parent.stem)/filename_stem)
     relative_corenlp_filepath_str = str(Path('output_files')/(filename_stem+'.json'))
     relative_pubtator_filepath_str = str(Path('pubtator')/filename_stem)
+    # test_set = 'test' if filename_stem in test_set_pmids else 'traindev'
 
     with open(filepath_str) as f:
         print(filename_stem,
@@ -56,6 +57,7 @@ def print_article_info(filepath, article_archive_path_str):
               relative_input_filepath_str,
               relative_corenlp_filepath_str,
               relative_pubtator_filepath_str,
+              train_dev_test_dict.get(filename_stem, ''), # returns 'train', 'test', 'dev', or empty string
               sep='\t')
 
 def main(conf, current_chunk, total_chunks):
@@ -75,6 +77,12 @@ def main(conf, current_chunk, total_chunks):
         printl('Article loader - Chunk {} - multiple files found: {} (importing anyway)'.format(current_chunk,
                                                                                                 str(article_chunk)))
 
+    # with open('/home/ubuntu/sandip/bioshovel_biocreative_update/src/deepdive/test_set_pmids.txt') as f:
+    #     test_set_pmids = set([line.rstrip('\n') for line in f.readlines()])
+
+    with open(conf['train_dev_test_ids_json']) as f:
+        train_dev_test_dict = json.load(f)
+
     for article_archive in article_chunk:
         printl(article_archive)
         with tarfile.open(article_archive, "r:gz") as tar, tempfile.TemporaryDirectory() as td:
@@ -90,7 +98,7 @@ def main(conf, current_chunk, total_chunks):
                                                      '*'))
 
             for i, filepath in enumerate(input_filepaths):
-                print_article_info(Path(filepath), article_archive)
+                print_article_info(Path(filepath), article_archive, train_dev_test_dict)
                 if i % 500 == 0:
                     printl('Processed file {} of chunk'.format(i))
 

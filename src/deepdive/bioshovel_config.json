@@ -6,5 +6,6 @@
     "fuzzy_ner_match": true,
     "fuzzy_ratio": 75,
     "min_chunk": 0,
-    "max_chunk": 0
+    "max_chunk": 0,
+    "train_dev_test_ids_json": "../../data/train_dev_test_ids.json"
 }
