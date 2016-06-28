@@ -4,7 +4,8 @@ articles(
     article_archive     text,
     article_filepath    text,
     corenlp_filepath    text,
-    pubtator_filepath   text
+    pubtator_filepath   text,
+    file_source         text     // train,test,dev
 ).
 
 sentences(
@@ -112,7 +113,8 @@ chemical_disease_candidate(
     chem_mesh_id    text,
     disease_id      text,
     disease_name    text,
-    disease_mesh_id text
+    disease_mesh_id text,
+    doc_id          text
 ).
 
 chemical_disease_candidate(chem_mention_id,
@@ -120,7 +122,8 @@ chemical_disease_candidate(chem_mention_id,
                            chem_mesh_id,
                            disease_mention_id,
                            disease_name,
-                           disease_mesh_id) :-
+                           disease_mesh_id,
+                           doc_id) :-
     mention(chem_mention_id, mention_type_chem, chem_name, doc_id, sentence_index, _, _, chem_mesh_id),
     mention(disease_mention_id, mention_type_disease, disease_name, doc_id, sentence_index, _, _, disease_mesh_id),
     mention_type_chem = "CHEMICAL",
@@ -189,7 +192,7 @@ chemical_disease_gt(
     relation            text
 ).
 
-// specify prediction variable
+// specify prediction variable (that's what the question mark means)
 has_relation?(
     chem_id     text,
     disease_id  text,
@@ -198,8 +201,8 @@ has_relation?(
 
 // (OPTIONAL specifies an outer join)
 has_relation(chem_id, disease_id, "CID") =
-    if gt_disease_mesh_id IS NULL then NULL else TRUE end :-
-    chemical_disease_candidate(chem_id, _, cand_chem_mesh_id, disease_id, _, cand_disease_mesh_id),
+    if gt_disease_mesh_id IS NULL then FALSE else TRUE end :-
+    chemical_disease_candidate(chem_id, _, cand_chem_mesh_id, disease_id, _, cand_disease_mesh_id, _),
     OPTIONAL[ chemical_disease_gt(gt_chem_mesh_id, gt_disease_mesh_id, subtype),
     cand_disease_mesh_id = gt_disease_mesh_id,
     cand_chem_mesh_id = gt_chem_mesh_id
@@ -207,9 +210,9 @@ has_relation(chem_id, disease_id, "CID") =
 
 @weight(feature)
 has_relation(chem_id, disease_id, "CID") :-
-    chemical_disease_candidate(chem_id, _, _, disease_id, _, _),
+    chemical_disease_candidate(chem_id, _, _, disease_id, _, _, _),
     chemical_disease_feature(chem_id, disease_id, feature).
 
 @weight(-1.0)
 has_relation(chem_id, disease_id, "CID") v has_relation(disease_id, chem_id, "CID") :-
-    chemical_disease_candidate(chem_id, _, _, disease_id, _, _).
+    chemical_disease_candidate(chem_id, _, _, disease_id, _, _, _).
