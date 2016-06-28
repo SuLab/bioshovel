@@ -45,3 +45,5 @@ mv /tmp/chemical_disease_gt.tsv input/
 deepdive do chemical_disease_gt
 
 deepdive do probabilities
+
+deepdive do calibration-plots
