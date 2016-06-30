@@ -11,6 +11,9 @@ if ! type "deepdive" 2> /dev/null 1>&2; then
     exit 1;
 fi
 
+# install ddlib for python3 (from local repo version)
+./install_ddlib_py3.sh
+
 export CURRENT_DD_APP=`pwd`
 MINCHUNK=`cat bioshovel_config.json | deepdive env jq -r '.min_chunk'`
 MAXCHUNK=`cat bioshovel_config.json | deepdive env jq -r '.max_chunk'`
