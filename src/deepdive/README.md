@@ -27,7 +27,7 @@ Entire pipeline can be run from the base directory using **`./run.sh`**
 * Requires `deepdive` (v0.8) to be in `$PATH`
 * Requires Python3 to be installed and available via `python3` in `$PATH`
 * Requires Bioshovel Python dependencies to be installed (see `../../requirements.txt`)
-* Requires Python3-compatible `ddlib` to be installed by linking `[user_home]/local/lib/python/ddlib` to directory `ddlib` *(will be unnecessary in a future DeepDive release)*
+* Requires Python3-compatible `ddlib` to be installed by linking `[user_home]/local/lib/python` to directory `ddlib/python` *(will be unnecessary in a future DeepDive release)*
 
 `ddlib/`
 --
