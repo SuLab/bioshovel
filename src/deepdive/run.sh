@@ -19,6 +19,16 @@ createdb $DBNAME
 
 echo "postgresql://ubuntu@localhost:5432/$DBNAME" > db.url
 
+# pull out CID ground truth relations
+TRAINTGZ=`cat bioshovel_config.json | deepdive env jq -r '.training_data_tgz'`
+cd `dirname $TRAINTGZ`
+tar -xf `basename $TRAINTGZ`
+# TODO: fix the following command (the `cat` portion of the pipeline) to work 
+# with any training data directory name... not just hardcoded name
+cat biocreative_cdr_training/pubtator_cid/* | grep -P '\tCID\t' | awk -v OFS='\t' '{ print $3, $4, $2 }' > /tmp/chemical_disease_gt.tsv
+cd $CURRENT_DD_APP
+mv /tmp/chemical_disease_gt.tsv input/
+
 # don't open editor for plan for each each `deepdive do`
 export DEEPDIVE_PLAN_EDIT=false
 
@@ -51,12 +61,7 @@ deepdive do chemical_disease_candidate
 # create chemical_disease_feature table and extract features using UDF
 deepdive do chemical_disease_feature
 
-# pull out CID ground truth relations and load into data table
-TRAINING_DATA_DIR=`cat bioshovel_config.json | deepdive env jq -r '.training_data_directory'`
-cd $TRAINING_DATA_DIR
-cat biocreative_cdr_training/pubtator_cid/* | grep -P '\tCID\t' | awk -v OFS='\t' '{ print $3, $4, $2 }' > /tmp/chemical_disease_gt.tsv
-cd -
-mv /tmp/chemical_disease_gt.tsv input/
+# load CID ground truth relations into data table
 deepdive do chemical_disease_gt
 
 deepdive do probabilities

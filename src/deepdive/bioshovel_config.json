@@ -1,6 +1,6 @@
 {
     "data_directory": "../../data/",
-    "training_data_directory": "../../data/",
+    "training_data_tgz": "../../data/biocreative_cdr_training_0_combined.tgz",
     "data_tgz": true,
     "parse_pubtator": true,
     "fuzzy_ner_match": true,
