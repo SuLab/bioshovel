@@ -15,6 +15,11 @@
 * Python package dependencies in `requirements.txt`
     * `lxml` may require external `libxml2` installation (using a tool like `apt-get`)
 
+## Ensuring `pip3` and `libxml2` are installed
+
+* On Ubuntu (14.04), run `sudo apt-get install -y python3-pip`
+* Install `lxml` dependencies using: `sudo apt-get install -y libxml2 libxml2-dev libxslt1-dev lib32z1-dev`
+
 ### Installing Python dependencies
 
 * Clone the repo and `cd bioshovel`
