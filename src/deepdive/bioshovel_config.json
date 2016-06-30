@@ -7,5 +7,6 @@
     "fuzzy_ratio": 75,
     "min_chunk": 0,
     "max_chunk": 2,
-    "train_dev_test_ids_json": "../../data/train_dev_test_ids.json"
+    "train_dev_test_ids_json": "../../data/train_dev_test_ids.json",
+    "database_name": "bioshovel"
 }

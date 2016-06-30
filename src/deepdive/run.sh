@@ -1,8 +1,23 @@
 #!/bin/bash
 
+# check if `deepdive` is in $PATH
+if ! type "deepdive" 2> /dev/null 1>&2; then 
+    echo "DeepDive not installed or not in \$PATH";
+    if type $HOME/local/bin/deepdive 2> /dev/null 1>&2; then
+        echo "Try adding the following to ~/.bashrc and restarting shell:";
+        echo "PATH=$HOME/local/bin:\$PATH; export PATH";
+    fi
+    echo "Exiting...";
+    exit 1;
+fi
+
 export CURRENT_DD_APP=`pwd`
 MINCHUNK=`cat bioshovel_config.json | deepdive env jq -r '.min_chunk'`
 MAXCHUNK=`cat bioshovel_config.json | deepdive env jq -r '.max_chunk'`
+DBNAME=`cat bioshovel_config.json | deepdive env jq -r '.database_name'`
+createdb $DBNAME
+
+echo "postgresql://ubuntu@localhost:5432/$DBNAME" > db.url
 
 # don't open editor for plan for each each `deepdive do`
 export DEEPDIVE_PLAN_EDIT=false
