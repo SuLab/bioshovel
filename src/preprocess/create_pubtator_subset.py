@@ -67,7 +67,7 @@ def main(args):
             found_count += 1
             if not args.c:
                 save_file(pmid,
-                          [line+'\n' for line in (title, abstract)],
+                          [line+'\n' for line in (title, abstract, '\n'.join(ner_lines))],
                           pubtator_outdir)
                 _, parform_output = pubtator_to_parform(title,
                                                         abstract,
